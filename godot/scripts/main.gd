@@ -66,6 +66,13 @@ var portrait_id := ""
 var backgrounds: Array[TextureRect] = []
 var bg_active := 0
 var bg_id := ""
+var bg_shade: ColorRect
+var vista_fx: ShaderMaterial
+## 창백이 그려진 풍경: 전용 셰이더를 씌운다. 처음 볼 때는 막을 걷어 풍경을 보여준 뒤(VISTA_REVEAL초)
+## 글을 읽을 수 있을 만큼 다시 어둡게 한다. 값은 그 뒤의 막 농도.
+const VISTAS := {"river_beyond": 0.66}
+const VISTA_REVEAL := 2.2
+var typing_delay := 0.0   # 다음 타자 효과를 시작하기 전 기다릴 시간
 var typing: Tween
 var settings := Settings.load_or_default()
 var title: TitleScreen
@@ -199,6 +206,9 @@ func _build_layout() -> void:
 	shade.color = Color(C_BG, 0.8)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	right.add_child(shade)
+	bg_shade = shade
+	vista_fx = ShaderMaterial.new()
+	vista_fx.shader = preload("res://shaders/bg_pale.gdshader")
 	var main_col := VBoxContainer.new()
 	main_col.set_anchors_preset(Control.PRESET_FULL_RECT)
 	main_col.add_theme_constant_override("separation", 0)
@@ -329,8 +339,8 @@ func _build_modal() -> void:
 
 # ---------- 렌더링 ----------
 func _refresh() -> void:
+	_render_side()   # 배경이 먼저 바뀌어야 풍경 연출에 맞춰 글을 늦출 수 있다
 	_render_log()
-	_render_side()
 	_render_options()
 	_update_atmosphere()
 
@@ -343,6 +353,8 @@ func _update_atmosphere() -> void:
 	audio.update(scene, game.S.node, int(game.S.day), ending, pale, game.minutes())
 	audio.play_events(game.events)
 	var k := settings.pale_strength
+	vista_fx.set_shader_parameter("strength", k)
+	vista_fx.set_shader_parameter("pale", pale)
 	_tween_param("intensity", clampf((pale + (0.5 if ending and "창백" in scene else 0.0)) * k, 0.0, 1.0), 2.0)
 	_tween_param("edge", AudioDirector.edge_for(scene) * k, 2.0)
 	if "pale_up" in game.events:
@@ -379,6 +391,9 @@ func _render_log() -> void:
 	log_view.visible_characters = before
 	opts_box.visible = false
 	typing = create_tween()
+	if typing_delay > 0.0:
+		typing.tween_interval(typing_delay)
+		typing_delay = 0.0
 	typing.tween_property(log_view, "visible_characters", after, (after - before) / settings.text_speed)
 	typing.finished.connect(_finish_typing)
 
@@ -447,7 +462,9 @@ static func background_for(scene: String, day: int) -> String:
 		return "rally"
 	if "경계" in scene:
 		return "edge"
-	if "압록강" in scene or "창백의 가장자리" in scene:
+	if "압록강 둑" in scene or "창백의 가장자리" in scene:
+		return "river_beyond"
+	if "압록강" in scene:
 		return "river"
 	if "관측소" in scene:
 		return "station"
@@ -466,6 +483,16 @@ func _show_background(id: String) -> void:
 	var nxt := backgrounds[bg_active]
 	var tw := create_tween().set_parallel()
 	tw.tween_property(old, "modulate:a", 0.0, 1.2)
+	nxt.material = vista_fx if VISTAS.has(id) else null
+	if VISTAS.has(id):
+		# 막을 걷어 풍경을 보여주고, 잠시 뒤 다시 내린다. 글은 그동안 기다린다.
+		var reveal := create_tween()
+		reveal.tween_property(bg_shade, "color:a", 0.12, 1.0)
+		reveal.tween_interval(VISTA_REVEAL - 1.0)
+		reveal.tween_property(bg_shade, "color:a", VISTAS[id], 1.4)
+		typing_delay = VISTA_REVEAL
+	else:
+		tw.tween_property(bg_shade, "color:a", 0.8, 1.2)
 	if id != "" and ResourceLoader.exists(path):
 		nxt.texture = load(path)
 		tw.tween_property(nxt, "modulate:a", 1.0, 1.2)
