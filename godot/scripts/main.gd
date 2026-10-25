@@ -72,6 +72,8 @@ var vista_fx: ShaderMaterial
 ## 글을 읽을 수 있을 만큼 다시 어둡게 한다. 값은 그 뒤의 막 농도.
 const VISTAS := {}   # 예: {"river_beyond": 0.66} — 지금은 쓰는 풍경 없음
 const VISTA_REVEAL := 2.2
+## 배경별 막 농도(기본 0.8). 흐릿한 실사진은 막을 옅게 해야 풍경이 보인다.
+const SHADE := {"river": 0.6}
 var typing_delay := 0.0   # 다음 타자 효과를 시작하기 전 기다릴 시간
 var typing: Tween
 var pale_overlay: ColorRect
@@ -540,7 +542,7 @@ func _show_background(id: String) -> void:
 		reveal.tween_property(bg_shade, "color:a", VISTAS[id], 1.4)
 		typing_delay = VISTA_REVEAL
 	else:
-		tw.tween_property(bg_shade, "color:a", 0.8, 1.2)
+		tw.tween_property(bg_shade, "color:a", SHADE.get(id, 0.8), 1.2)
 	if id != "" and ResourceLoader.exists(path):
 		nxt.texture = load(path)
 		tw.tween_property(nxt, "modulate:a", 1.0, 1.2)
@@ -850,6 +852,7 @@ func _open_credits() -> void:
 		["기획 · 이야기 방향", "dkskhjs"],
 		["글 · 프로그람 · 음악 합성", "Claude (Anthropic)"],
 		["인물 · 배경 그림", "Gemini로 생성, 기획자 감수"],
+		["압록강 사진", "「North Korea and Yalu River」 (Wikimedia Commons) · CC BY 2.0\n흐림·어둡게 가공함 — creativecommons.org/licenses/by/2.0"],
 		["음악 · 소리", "모두 합성음 — tools/make_audio.py, tools/make_music.py"],
 		["글꼴", "나눔명조 (SIL Open Font License 1.1)"],
 		["엔진", "Godot Engine (MIT 허가)"],
