@@ -9,6 +9,17 @@ const C_DIM := Color("#8f877a")
 const C_OPT := Color("#d9c08a")
 const C_HP := Color("#d0625a")
 const C_MO := Color("#a68be0")
+## 대사하는 인물 → 초상화 파일(art/portraits/<id>.webp). 없는 인물은 주인공 초상화를 유지한다.
+const PORTRAITS := {
+	"": ["hero", "보위원 소좌 [이름 없음]"],
+	"박순녀": ["park", "박순녀 — 인민반장"],
+	"정명수": ["myeongsu", "정명수 — 하전사"],
+	"하전사": ["myeongsu", "정명수 — 하전사"],
+	"오영희": ["oh", "오영희 — 기상관측원"],
+	"고양이": ["cat", "고양이 — 밀수꾼"],
+	"최경철": ["choi", "최경철 — 검열국 중좌"],
+	"노인": ["elder", "묘지기 노인"],
+}
 
 var game := Game.new()
 var font_regular: Font = preload("res://fonts/NanumMyeongjo-Regular.ttf")
@@ -31,6 +42,9 @@ var option_buttons: Array[Button] = []
 var audio: AudioDirector
 var pale_fx: ShaderMaterial
 var sound_btn: Button
+var portrait: TextureRect
+var portrait_caption: Label
+var portrait_id := ""
 
 
 func _ready() -> void:
@@ -101,6 +115,14 @@ func _build_layout() -> void:
 	side.add_theme_constant_override("separation", 12)
 	side_bg.add_child(side)
 
+	portrait = TextureRect.new()
+	portrait.custom_minimum_size = Vector2(260, 300)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	side.add_child(portrait)
+	portrait_caption = _dim_label(14)
+	side.add_child(portrait_caption)
+
 	scene_label = Label.new()
 	scene_label.add_theme_font_size_override("font_size", 26)
 	scene_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -115,12 +137,17 @@ func _build_layout() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	side.add_child(spacer)
-	sheet_btn = _side_button(side, "인물 · 기술", _open_sheet)
-	thought_btn = _side_button(side, "사상함", _open_thoughts)
-	_side_button(side, "저장", _on_save)
-	_side_button(side, "불러오기", _on_load)
-	_side_button(side, "새 게임", _open_start)
-	sound_btn = _side_button(side, "소리: 켜짐", _toggle_sound)
+	var buttons := GridContainer.new()
+	buttons.columns = 2
+	buttons.add_theme_constant_override("h_separation", 6)
+	buttons.add_theme_constant_override("v_separation", 6)
+	side.add_child(buttons)
+	sheet_btn = _side_button(buttons, "인물 · 기술", _open_sheet)
+	thought_btn = _side_button(buttons, "사상함", _open_thoughts)
+	_side_button(buttons, "저장", _on_save)
+	_side_button(buttons, "불러오기", _on_load)
+	_side_button(buttons, "새 게임", _open_start)
+	sound_btn = _side_button(buttons, "소리: 켜짐", _toggle_sound)
 
 	# 오른쪽: 로그 + 선택지
 	var main_col := VBoxContainer.new()
@@ -203,6 +230,8 @@ func _side_button(parent: Control, text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.add_theme_font_size_override("font_size", 16)
 	b.pressed.connect(cb)
 	parent.add_child(b)
 	return b
@@ -293,6 +322,23 @@ func _render_side() -> void:
 	sheet_btn.text = "인물 · 기술" + (" (+%d)" % sp if sp > 0 else "")
 	var t: Dictionary = game.S.thoughts
 	thought_btn.text = "사상함" + (" (내면화 중)" if t.active != "" else (" (%d)" % t.known.size() if t.known.size() > 0 else ""))
+	_show_portrait(game.S.get("speaker", ""))
+
+
+## 이 장면에서 마지막으로 말한 인물의 초상화. 확성기·라디오처럼 초상화가 없는 목소리면 주인공.
+func _show_portrait(speaker: String) -> void:
+	var entry: Array = PORTRAITS.get(speaker, PORTRAITS[""])
+	var path := "res://art/portraits/%s.webp" % entry[0]
+	if not ResourceLoader.exists(path):
+		entry = PORTRAITS[""]
+		path = "res://art/portraits/hero.webp"
+	if entry[0] == portrait_id:
+		return
+	portrait_id = entry[0]
+	portrait_caption.text = entry[1]
+	portrait.texture = load(path)
+	portrait.modulate.a = 0.0
+	create_tween().tween_property(portrait, "modulate:a", 1.0, 0.6)
 
 
 func _pips(box: HBoxContainer, cur: int, mx: int, col: Color) -> void:

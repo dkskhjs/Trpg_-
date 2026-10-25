@@ -184,6 +184,7 @@ func add_line(raw: String) -> void:
 		return
 	m = _re_npc.search(raw)
 	if m:
+		S.speaker = m.get_string(1)
 		push("npc", "[color=#e8c890][b]%s[/b][/color] — %s" % [esc(m.get_string(1)), esc(m.get_string(2))])
 		return
 	push("narr", esc(raw))
@@ -282,6 +283,7 @@ func go(id: String) -> void:
 	assert(story.has(id), "노드 없음: " + id)
 	var n: Dictionary = story[id]
 	S.node = id
+	S.speaker = ""
 	S.visited[id] = visited(id) + 1
 	if visited(id) == 1:
 		apply(n.get("on"))

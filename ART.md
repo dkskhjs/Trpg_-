@@ -6,17 +6,18 @@
 
 ## 1. 공통 화풍
 
-모든 프롬프트 앞에 아래 **스타일 블록**을 붙이세요. 화풍이 흔들리면 이 블록을 고치면 됩니다.
+확정된 화풍은 **빈티지 선전 포스터 실크스크린**입니다(완성된 초상화 5장 기준).
+모든 프롬프트 앞에 아래 **스타일 블록**을 붙이세요. 남은 그림을 만들 때는 완성된 초상화 한 장을 참고 이미지로 함께 넣으면 화풍이 가장 잘 맞습니다.
 
 ```
-expressive oil painting, thick visible brushstrokes, palette-knife texture, muted desaturated palette of
-ochre, rust, olive, slate grey and dirty cream, harsh directional light, painterly loose edges, melancholic,
-1990s–2000s rural North Korea, Soviet-style concrete and coal-smoke atmosphere, a cold unnatural white haze
-creeping in at the edges of the image, no text, no lettering, no watermark
+vintage propaganda poster, screen print, bold black ink outlines, limited palette of vermilion red,
+burnt orange, olive green, charcoal and cream, rough diagonal brush streaks in the background,
+halftone dots, worn cream paper texture with a thin paper border, dramatic side lighting,
+rural North Korea 1990s–2000s, no text, no lettering, no watermark
 ```
 
-- **색**: 흙, 녹, 석탄 같은 탁한 색입니다. 유일하게 선명한 색은 **붉은색**(완장, 구호 천, 견장)입니다.
-- **창백**: 모든 그림 어딘가에 **의미가 빠진 듯한 하얀 영역**이 있습니다. 안개처럼 퍼지지 않고, 붓질이 멈춘 캔버스처럼 보여야 합니다. 장소가 강에 가까울수록 이 영역이 넓어집니다.
+- **색**: 주홍, 번트 오렌지, 올리브, 숯빛, 크림색 종이. 붉은색은 완장, 구호 천, 배경 사선에 씁니다.
+- **창백**: 모든 그림 어딘가에 **잉크가 찍히지 않은 듯한 크림색·하얀 영역**이 있습니다. 인물이라면 손끝, 배지, 옷자락이 하얗게 비어 있습니다(완성된 정명수·주인공 초상화처럼). 장소가 강에 가까울수록 이 영역이 넓어집니다.
 - **금지**:
   - 실존 지도자의 얼굴. 초상화 액자는 반드시 **얼굴 없이 하얗게** 그립니다.
   - 읽을 수 있는 글자. 구호판은 붉은 바탕에 알아볼 수 없는 붓질로만 그립니다.
@@ -32,14 +33,16 @@ creeping in at the edges of the image, no text, no lettering, no watermark
 
 | 종류 | 비율 | 권장 크기 | 저장 위치 |
 |---|---|---|---|
-| 인물 초상화 | 3:4 세로 | 768×1024 | `godot/art/portraits/<id>.png` |
-| 장소 배경 | 16:9 가로 | 1920×1080 | `godot/art/scenes/<id>.png` |
+| 인물 초상화 | 3:4 세로 | 896×1200 | `godot/art/portraits/<id>.webp` |
+| 장소 배경 | 16:9 가로 | 1920×1080 | `godot/art/scenes/<id>.webp` |
 
-파일 이름을 표의 `id`대로 맞추면 Godot에서 자동으로 연결됩니다(연결 작업은 이미지가 생기면 진행합니다).
+파일 이름을 표의 `id`대로 맞추면 Godot에서 자동으로 연결됩니다. 초상화는 인물이 말할 때 왼쪽 패널에 뜹니다(`godot/scripts/main.gd`의 `PORTRAITS`).
 
 ## 3. 등장인물 초상화
 
-공통 구도: `bust portrait, three-quarter view, dark muddy background, face lit from one side`
+공통 구도: `bust portrait, three-quarter view, face lit from one side`
+
+완성: `hero` `park` `myeongsu` `oh` `cat` ✅ · 남은 것: `choi` `elder`
 
 | id | 인물 | 프롬프트 (스타일 블록 뒤에 붙임) |
 |---|---|---|

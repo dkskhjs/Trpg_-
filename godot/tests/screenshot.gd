@@ -19,6 +19,11 @@ func _init() -> void:
 	_snap(out + "/g_sheet.png")
 	main._close_modal()
 	# 창백 노출이 높을 때 강가 화면
+	main.game.go("station")
+	main.game.go("oh_lastnight")
+	main._refresh()
+	await create_timer(1.0).timeout
+	_snap(out + "/g_npc.png")
 	main.game.S.pale = 3
 	main.game.go("square")
 	main._refresh()
