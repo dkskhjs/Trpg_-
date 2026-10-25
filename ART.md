@@ -95,8 +95,16 @@ rural North Korea 1990s–2000s, no text, no lettering, no watermark
 | `bocheon` | 보천 갈림길 (4일째 밤) | `a tiny abandoned mountain railway station at night, collapsed roof, wall clock stopped, small coal stove glowing, the northern sky beyond the window a tall silent white` |
 | `dark` | 어둠 | `almost total darkness, the faint outline of a loudspeaker horn, a single sliver of white light` |
 
+### 세력 인물 후보 (확정되면 진행)
+| id | 인물 | 프롬프트 |
+|---|---|---|
+| `do` | 도학수 교수. 단군신화 연구대장, 70대 | `an elderly Korean archaeologist in his 70s, round wire glasses, worn field jacket over a suit, holding an old bone fragment wrapped in cloth, guilt in his eyes, mountain cold on his breath` |
+| `kwak` | 곽만석. 백두산 포수, 50대 | `a rugged Korean mountain hunter in his 50s, fur hat, old hunting rifle, snow on his shoulders, squinting at tracks in the snow` |
+| `seo` | 서은하. 생물학 연구원, 20대 | `a young Korean woman biologist in her 20s, padded lab coat over winter clothes, specimen jars and a notebook, eager intense eyes` |
+| `white_bear` | 하얀 곰 (장면 그림) | `a huge pale bear walking through a blank white snowfield, its fur the same color as the void, only its dark eyes and footprints visible` |
+
 ### 5일째 이후 예정 장소
-삼지연 읍과 기념비 광장, 혁명전적지 해설관, 백두산 기슭 숲길, 밀영. 세력이 확정되면 연구소 천막, 곰 사냥꾼 야영지 등을 추가합니다.
+삼지연 읍과 기념비 광장, 혁명전적지 해설관, 백두산 기슭 숲길, 밀영. 세력이 확정되면 연구소 천막, 연구대 야영지, 쑥 냄새 나는 동굴 입구, 하얀 곰 발자국이 찍힌 눈밭 등을 추가합니다.
 
 ## 5. 소지품 그림 (선택)
 아이템 아이콘으로 쓸 수 있는 작은 그림입니다. 정사각형 512×512, 크림색 종이 바탕에 물건 하나만 그립니다.
