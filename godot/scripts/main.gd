@@ -60,7 +60,6 @@ var rendered_serial := 0
 var option_buttons: Array[Button] = []
 var audio: AudioDirector
 var pale_fx: ShaderMaterial
-var sound_btn: Button
 var portrait: TextureRect
 var portrait_caption: Label
 var portrait_id := ""
@@ -79,6 +78,7 @@ func _ready() -> void:
 	audio = AudioDirector.new()
 	add_child(audio)
 	audio.set_volumes(settings.master, settings.music)
+	audio.set_muted(settings.muted)
 	_show_title()
 
 
@@ -174,10 +174,10 @@ func _build_layout() -> void:
 	side.add_child(buttons)
 	sheet_btn = _side_button(buttons, "인물 · 기술", _open_sheet)
 	thought_btn = _side_button(buttons, "사상함", _open_thoughts)
-	_side_button(buttons, "저장", _on_save)
+	_side_button(buttons, "보관하기", _on_save)
 	_side_button(buttons, "불러오기", _on_load)
-	_side_button(buttons, "차림표", _show_title)
-	sound_btn = _side_button(buttons, "소리: 켜짐", _toggle_sound)
+	_side_button(buttons, "설정", _open_settings)
+	_side_button(buttons, "첫화면으로", _show_title)
 
 	# 오른쪽: 로그 + 선택지
 	# 본문 뒤에 장소 배경 두 장(교차 페이드용)과 글자를 읽을 수 있게 하는 어두운 막
@@ -356,9 +356,6 @@ func _tween_param(param: String, to: float, secs: float) -> void:
 	create_tween().tween_method(func(v): pale_fx.set_shader_parameter(param, v), from, to, secs)
 
 
-func _toggle_sound() -> void:
-	audio.set_muted(not audio.muted)
-	sound_btn.text = "소리: " + ("꺼짐" if audio.muted else "켜짐")
 
 
 ## 새로 붙은 로그만 타자기처럼 한 글자씩 드러낸다. 끝날 때까지 선택지는 숨긴다.
@@ -696,7 +693,7 @@ func _start_new(i: int) -> void:
 	_refresh()
 
 
-# ---------- 첫 화면 ----------
+# ---------- 첫화면 ----------
 func _show_title() -> void:
 	_close_modal()
 	title.refresh(game.has_game() or FileAccess.file_exists(Game.SAVE_PATH))
@@ -729,6 +726,16 @@ func _open_settings() -> void:
 		settings.pale_strength = v
 		if game.has_game():
 			_update_atmosphere())
+	var mute := CheckButton.new()
+	mute.text = "소리 끄기"
+	mute.button_pressed = settings.muted
+	mute.add_theme_font_override("font", font_bold)
+	mute.add_theme_color_override("font_color", C_HEAD)
+	mute.toggled.connect(func(on):
+		settings.muted = on
+		audio.set_muted(on)
+		settings.save())
+	modal_body.add_child(mute)
 	_modal_text("설정은 자동으로 보관됩니다.", C_DIM, 14)
 
 
@@ -880,7 +887,7 @@ func _thought_card(id: String, state: String) -> void:
 func _on_save() -> void:
 	if not game.has_game():
 		return
-	game.sys("— 저장됨 —" if game.save_game() else "— 저장 실패 —")
+	game.sys("— 보관되였습니다 —" if game.save_game() else "— 보관하지 못했습니다 —")
 	_render_log()
 
 
@@ -888,9 +895,9 @@ func _on_load() -> void:
 	if game.load_game():
 		rendered_serial = 0
 		instant_log = true
-		game.sys("— 불러옴 —")
+		game.sys("— 보관된 놀이를 불러왔습니다 —")
 		_close_modal()
 		_refresh()
 	elif game.has_game():
-		game.sys("— 저장된 게임 없음 —")
+		game.sys("— 보관된 놀이가 없습니다 —")
 		_render_log()

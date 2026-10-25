@@ -1,4 +1,4 @@
-## 첫 화면(차림표). 새놀이 · 이어하기 · 설정 · 만든이들 · 끝내기.
+## 첫화면. 새놀이 · 이어하기 · 설정 · 만든이들 · 끝내기.
 class_name TitleScreen
 extends Control
 
