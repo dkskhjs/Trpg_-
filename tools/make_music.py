@@ -9,6 +9,7 @@ import os
 import sys
 
 import numpy as np
+from scipy import signal
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import make_audio as A  # noqa: E402
@@ -46,7 +47,7 @@ BRIDGE = [
     (7, .75), (6, .25), (5, .5), (4, .5), (5, 2),
 ]
 BRIDGE_CHORDS = [4, 4, 1, 5, 4, 1, 5, 5]
-TRIAD = {1: (1, 3, 5), 2: (2, 4, 6), 4: (4, 6, 8), 5: (5, 7, 9), 6: (6, 8, 10)}
+TRIAD = {1: (1, 3, 5), 2: (2, 4, 6), 3: (3, 5, 7), 4: (4, 6, 8), 5: (5, 7, 9), 6: (6, 8, 10), 7: (7, 9, 11)}
 
 
 # ------------------------------------------------------------------ 악기
@@ -146,6 +147,134 @@ def brush(d=0.15):
     return filt(rng().standard_normal(len(t)), "bandpass", [2000, 8000], 2) * np.exp(-t * 25) * 0.25
 
 
+# ---- 실제 악기에 가까운 음색 (아침·낮) ----
+def pluck(f, d, bright=0.5, body=True):
+    """카플러스-스트롱 뜯는 현. 짧은 소음이 지연선 안에서 걸러지며 현처럼 울린다."""
+    n = int(max(d, 1.5) * SR)
+    # 두 표본 평균 필터가 반 표본 지연을 더하므로 지연선 길이는 주기 − 0.5
+    N = max(2, int(round(SR / f - 0.5)))
+    burst = filt(rng().standard_normal(N), "lowpass", 1500 + 6000 * bright, 2)
+    x = np.zeros(n)
+    x[:N] = burst
+    g = 0.996
+    a = np.zeros(N + 2)
+    a[0] = 1
+    a[N] = a[N + 1] = -g * 0.5
+    y = signal.lfilter([1], a, x)
+    if body:
+        y = y + 0.4 * filt(y, "bandpass", [180, 420], 2)
+    return y * np.exp(-np.arange(n) / SR * 1.2)
+
+
+def gayageum(f, d):
+    """가야금풍: 어두운 뜯음 + 줄을 누른 듯 살짝 떠는 여음."""
+    y = pluck(f, d, 0.35)
+    t = np.arange(len(y)) / SR
+    shake = 1 + 0.25 * np.sin(2 * np.pi * 5.5 * t) * np.clip((t - 0.25) * 3, 0, 1)
+    return y * shake
+
+
+def piano(f, d):
+    """배음이 조금씩 높게 어긋나는(비조화) 피아노 음, 해머 소리."""
+    dur = max(d, 2.5)
+    t = t_axis(dur)
+    B = 0.0004
+    x = np.zeros(len(t))
+    for k in range(1, 10):
+        fk = k * f * np.sqrt(1 + B * k * k)
+        if fk > SR / 2.2:
+            break
+        decay = 1.2 + 0.6 * k
+        x += np.sin(2 * np.pi * fk * t + rng().uniform(0, 6)) * np.exp(-t * decay) / k ** 1.1
+    hammer = filt(rng().standard_normal(len(t)), "bandpass", [800, 3000], 2) * np.exp(-t * 80) * 0.15
+    x = x + hammer
+    rel = int(min(len(t), d * SR + 0.3 * SR))
+    x[rel:] *= np.exp(-np.arange(len(t) - rel) / SR * 8)
+    return x * 0.7
+
+
+def bowed(curve, nasal=False):
+    """음높이 곡선을 따라 켜는 찰현. nasal=True면 해금처럼 코맹맹이 소리."""
+    ph = np.cumsum(curve) / SR
+    x = 2 * (ph % 1) - 1
+    x += 0.06 * rng().standard_normal(len(x))           # 활 마찰
+    if nasal:
+        x = filt(x, "bandpass", [500, 3200], 2) + 0.8 * filt(x, "bandpass", [1100, 1600], 2)
+    else:
+        x = filt(x, "lowpass", 1800) + 0.5 * filt(x, "bandpass", [200, 500], 2)
+    return x
+
+
+def cello(f, d):
+    t = t_axis(d)
+    curve = f * (1 + 0.005 * np.sin(2 * np.pi * 4.8 * t) * np.clip(t - 0.4, 0, 1))
+    return bowed(curve) * adsr(len(t), min(0.8, d / 3), 0.2, 0.85, min(0.8, d / 3)) * 0.5
+
+
+def glide_phrase(notes, beat, p, slide=0.07, vib=0.012):
+    """음 사이를 미끄러지며 잇는 한 줄의 음높이 곡선과 음량 곡선(해금·첼로 선율용)."""
+    total = sum(b for _, b in notes) * beat
+    n = int(total * SR)
+    curve = np.zeros(n)
+    amp = np.zeros(n)
+    t0 = 0
+    prev = p(notes[0][0])
+    for d, b in notes:
+        f = p(d)
+        m = int(b * beat * SR)
+        tt = np.arange(m) / SR
+        s = min(int(slide * SR), m)
+        seg = np.full(m, f)
+        seg[:s] = prev * (f / prev) ** (np.arange(s) / max(1, s))
+        onset = np.clip((tt - 0.25) * 2, 0, 1)
+        seg *= 1 + vib * onset * np.sin(2 * np.pi * 5.2 * tt)
+        curve[t0:t0 + m] = seg[: n - t0]
+        e = np.ones(m) * 0.9
+        e[: int(0.05 * SR)] = np.linspace(0.45, 0.9, min(m, int(0.05 * SR)))   # 활을 다시 긋는 순간
+        amp[t0:t0 + m] = e[: n - t0]
+        t0 += m
+        prev = f
+    return curve, amp
+
+
+def janggu(kind="kung"):
+    t = t_axis(0.5)
+    if kind == "kung":   # 북편: 낮고 둥근 소리
+        return np.sin(2 * np.pi * (85 + 40 * np.exp(-t * 30)) * t) * np.exp(-t * 7)
+    # 채편: 높고 마른 소리
+    return filt(rng().standard_normal(len(t)), "bandpass", [900, 4000], 2) * np.exp(-t * 35) * 0.6 \
+        + np.sin(2 * np.pi * 420 * t) * np.exp(-t * 30) * 0.3
+
+
+def tape(x, wow=0.0016, flutter=0.00025, hiss=0.0025):
+    """낡은 테이프: 느리게 늘어지고(와우) 빠르게 떨리며(플러터) 쉬쉬 소리가 낀다."""
+    n = len(x)
+    t = np.arange(n) / SR
+    delay = 0.004 + wow * np.sin(2 * np.pi * 0.45 * t) + flutter * np.sin(2 * np.pi * 6.3 * t)
+    y = np.interp(t - delay, t, x, left=0)
+    y = filt(y, "lowpass", 7000, 2)
+    y = np.tanh(y / (np.max(np.abs(y)) or 1) * 1.4) * 0.8
+    return y + hiss * filt(rng().standard_normal(n), "highpass", 3000, 2)
+
+
+def flatten(notes):
+    """점음표(따-단)를 고르게 풀어 행진곡의 들뜬 느낌을 지운다."""
+    out = []
+    i = 0
+    while i < len(notes):
+        d, b = notes[i]
+        if b == .75 and i + 1 < len(notes) and notes[i + 1][1] == .25:
+            out += [(d, .5), (notes[i + 1][0], .5)]
+            i += 2
+        else:
+            out.append((d, b))
+            i += 1
+    return out
+
+
+PENTA = [1, 3, 4, 5, 7]   # 단조 오음음계(계면조풍): 1 ♭3 4 5 ♭7
+
+
 # ------------------------------------------------------------------ 편곡 엔진
 class Score:
     def __init__(self, bpm, mode=MAJOR, tonic=A.TONIC):
@@ -225,75 +354,65 @@ class Score:
 
 # ------------------------------------------------------------------ 곡
 def mus_morning():
-    """아침 — 메인 테마. 풀 밴드 행진곡."""
-    s = Score(112)
-    # 서주: 팀파니와 금관 화음
-    s.drums(4, "timp", 1.2)
-    s.pad("horns", [1, 1, 5, 5], horn, -1, 0.5)
-    s.melody("tpt", [(5, 1), (5, 1), (8, 2), (7, 1), (6, 1), (5, 2)], trumpet, 0, 0.8)
-    s.advance(4)
-    # A: 트럼펫 선율
-    s.melody("tpt", A_PART, trumpet)
-    s.oompah("bass", A_CHORDS)
-    s.offbeats("horns", A_CHORDS, horn)
-    s.drums(8)
-    s.advance(8)
-    # A': 플루트가 옥타브 위로, 클라리넷 대선율
-    s.melody("tpt", A_PART, trumpet, 0, 0.8)
-    s.melody("fl", A_PART, flute, 1, 0.5)
-    s.harmony("cl", A_PART, clarinet, 0, 0.45)
-    s.oompah("bass", A_CHORDS)
-    s.offbeats("horns", A_CHORDS, horn)
-    s.drums(8)
-    s.advance(8)
-    # B: 현악과 합창
-    s.melody("str", B_PART, strings, 0, 1.6)
-    s.pad("choir", B_CHORDS, choir, -1)
-    s.oompah("bass", B_CHORDS, gain=0.7)
-    s.drums(8, "timp")
-    s.advance(8)
-    # 브리지: 호른과 클라리넷
-    s.melody("horns", BRIDGE, horn, 0, 1.1)
-    s.harmony("cl", BRIDGE, clarinet, 0, 0.4)
-    s.pad("str", BRIDGE_CHORDS, strings, -1, 0.9)
-    s.oompah("bass", BRIDGE_CHORDS, gain=0.8)
-    s.drums(8, "light")
-    s.advance(8)
-    # A'': 전원 합주 + 글로켄슈필
-    s.melody("tpt", A_PART, trumpet)
-    s.melody("fl", A_PART, flute, 1, 0.5)
-    s.melody("glock", [n for n in A_PART], glock, 1, 0.35)
-    s.melody("str", A_PART, strings, -1, 1.2)
-    s.pad("choir", A_CHORDS, choir, -1)
-    s.oompah("bass", A_CHORDS)
-    s.offbeats("horns", A_CHORDS, horn)
-    s.drums(8)
-    s.advance(8)
-    # 코다
-    s.melody("tpt", [(8, 2), (5, 1), (3, 1), (1, 4)], trumpet)
-    s.pad("horns", [1, 1, 1, 1], horn, -1, 0.6)
-    s.pad("str", [1, 1, 1, 1], strings, -1, 0.9)
-    s.drums(4, "timp", 1.2)
-    s.advance(4)
-    return s.mix({"tpt": 0.55, "fl": 0.5, "cl": 0.5, "horns": 0.55, "bass": 0.55, "drums": 0.45,
-                  "str": 0.7, "choir": 0.9, "glock": 0.6})
+    """아침 — 안개 낀 국경. 첼로 드론과 기타 아르페지오 위에서 피아노가 단조로 바뀐 주제를 짚고,
+    멀리서 테이프로 늘어진 행진곡이 기억처럼 스친다."""
+    s = Score(64, MINOR)
+    melody = flatten(A_PART) + flatten(B_PART)
+    chords = A_CHORDS + B_CHORDS
+    for rnd in range(2):
+        # 첼로: 으뜸음과 5도를 길게
+        for i in range(0, 16, 2):
+            bt = s.t + i * 2 * s.beat
+            place(s.buf("cello"), cello(s.p(1) / 4, 4 * s.beat * 1.05), bt)
+            place(s.buf("cello"), cello(s.p(5) / 4, 4 * s.beat * 1.05) * 0.6, bt)
+        # 기타: 화음을 8분음표로 펼친다
+        for i, root in enumerate(chords):
+            bt = s.t + i * 2 * s.beat
+            tones = [TRIAD[root][0], TRIAD[root][2], TRIAD[root][1] + 7, TRIAD[root][2]]
+            for k, d in enumerate(tones):
+                place(s.buf("gtr"), pluck(s.p(d) / 2, 1.5, 0.4) * (0.9 if k == 0 else 0.6), bt + k * 0.5 * s.beat)
+        # 피아노: 주제를 띄엄띄엄 (두 번째 돌 때 더 비운다)
+        s.melody("piano", melody, piano, 0, 0.9, legato=1.0, skip=0.12 if rnd == 0 else 0.3)
+        if rnd == 1:
+            ghost = np.zeros(int(s.beat * 2 * 16 * SR) + SR * 4)
+            pos = 0.0
+            for d, b in A_PART:
+                place(ghost, A.brass(pitch(d, MINOR), b * s.beat * 0.9, 0.6), pos)
+                pos += b * s.beat
+            ghost = tape(A.loudspeaker(ghost, drive=2.5, distance=0.8), wow=0.004, hiss=0.0)
+            place(s.buf("ghost"), ghost, s.t)
+        s.advance(16)
+    x = s.mix({"cello": 0.5, "gtr": 0.45, "piano": 0.6, "ghost": 0.25}, 2.4, 0.35)
+    return tape(x)
 
 
 def mus_day():
-    """낮 — 협동농장. 아코디언과 클라리넷, 가벼운 북."""
-    s = Score(100)
-    for part, chords, lead in [(A_PART, A_CHORDS, accordion), (B_PART, B_CHORDS, clarinet),
-                               (A_PART, A_CHORDS, accordion), (BRIDGE, BRIDGE_CHORDS, flute)]:
-        s.melody("lead", part, lead, 0 if lead is not flute else 1, 0.9)
-        if lead is accordion:
-            s.harmony("cl", part, clarinet, 0, 0.35)
-        s.oompah("bass", chords, gain=0.6)
-        s.offbeats("acc", chords, accordion, -1, 0.35)
-        s.drums(8, "light")
-        if part is A_PART:
-            s.melody("glock", part[::2], glock, 2, 0.15)
+    """낮 — 협동농장의 오후. 해금이 주제를 미끄러지듯 켜고, 가야금이 오음음계로 음형을 뜯고,
+    장구가 드문드문 친다."""
+    s = Score(72, MINOR)
+    for part, chords in [(A_PART, A_CHORDS), (B_PART, B_CHORDS), (A_PART, A_CHORDS)]:
+        notes = flatten(part)
+        curve, amp = glide_phrase(notes, s.beat, s.p)
+        line = bowed(curve, nasal=True) * amp * 0.5
+        line *= adsr(len(line), 0.3, 0.1, 1.0, 0.8)
+        place(s.buf("haegeum"), line, s.t)
+        # 가야금: 마디마다 오음음계 음형
+        for i, root in enumerate(chords):
+            bt = s.t + i * 2 * s.beat
+            figure = [root, root + 4, root + 7, root + 4] if i % 2 == 0 else [root + 7, root + 6, root + 4, root]
+            for k, d in enumerate(figure):
+                d = min(PENTA, key=lambda q: abs(q - ((d - 1) % 7 + 1))) + 7 * ((d - 1) // 7)
+                place(s.buf("gayageum"), gayageum(s.p(d) / 2, 1.2) * 0.7, bt + k * 0.5 * s.beat)
+            # 장구: 덩(북편+채편) … 쿵 … 덕
+            place(s.buf("janggu"), janggu("kung") + janggu("deok") * 0.6, bt)
+            if i % 2 == 1:
+                place(s.buf("janggu"), janggu("kung") * 0.6, bt + 1.0 * s.beat)
+            place(s.buf("janggu"), janggu("deok") * 0.5, bt + 1.5 * s.beat)
+        for i in range(0, 8, 4):
+            place(s.buf("cello"), cello(s.p(1) / 4, 8 * s.beat * 1.05) * 0.7, s.t + i * 2 * s.beat)
         s.advance(8)
-    return s.mix({"lead": 0.6, "cl": 0.5, "bass": 0.5, "acc": 0.45, "drums": 0.6, "glock": 0.5}, 1.2, 0.22)
+    x = s.mix({"haegeum": 0.6, "gayageum": 0.55, "janggu": 0.4, "cello": 0.4}, 1.8, 0.28)
+    return tape(x, wow=0.001, hiss=0.0015)
 
 
 def mus_evening():
