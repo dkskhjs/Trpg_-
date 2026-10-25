@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="768" height="1024" viewBox="0 0 768 1024">
+  <!-- 오영희 밑그림: 형태와 명암만. 유화 질감은 tools/paint/paint.py가 붓 자국으로 덧칠한다. -->
+  <defs>
+    <radialGradient id="bg" cx="0.62" cy="0.42" r="0.75">
+      <stop offset="0" stop-color="#4a3f2c"/>
+      <stop offset="0.55" stop-color="#2c261c"/>
+      <stop offset="1" stop-color="#110f0b"/>
+    </radialGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="0.15">
+      <stop offset="0" stop-color="#5e3e2c"/>
+      <stop offset="0.35" stop-color="#8f6448"/>
+      <stop offset="0.7" stop-color="#c49372"/>
+      <stop offset="1" stop-color="#d9ad88"/>
+    </linearGradient>
+    <linearGradient id="neck" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4a3122"/>
+      <stop offset="1" stop-color="#9c7053"/>
+    </linearGradient>
+    <linearGradient id="cardigan" x1="0" y1="0" x2="1" y2="0.3">
+      <stop offset="0" stop-color="#2a281b"/>
+      <stop offset="0.6" stop-color="#4c4730"/>
+      <stop offset="1" stop-color="#6e6544"/>
+    </linearGradient>
+    <linearGradient id="hand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7a5038"/>
+      <stop offset="1" stop-color="#c8946f"/>
+    </linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="smoke"><feGaussianBlur stdDeviation="9"/></filter>
+    <filter id="tiny"><feGaussianBlur stdDeviation="1.4"/></filter>
+  </defs>
+
+  <rect width="768" height="1024" fill="url(#bg)"/>
+  <!-- 창문 빛: 오른쪽에서 -->
+  <ellipse cx="700" cy="380" rx="200" ry="420" fill="#6b5a3c" opacity="0.35" filter="url(#smoke)"/>
+
+  <!-- 몸통과 카디건 -->
+  <path d="M60 1024 C90 880 210 805 330 782 L460 782 C590 805 690 870 730 1024 Z" fill="url(#cardigan)"/>
+  <path d="M330 782 L372 905 L330 1024 L250 1024 C270 930 300 850 330 782 Z" fill="#22201a" opacity="0.6"/>
+  <path d="M460 782 L425 905 L470 1024 L560 1024 C540 930 500 850 460 782 Z" fill="#7a7050" opacity="0.5"/>
+  <!-- 뜨개 결 -->
+  <g stroke="#1c1a12" stroke-width="3" opacity="0.35" fill="none">
+    <path d="M150 900 C200 880 240 900 290 885"/><path d="M120 960 C180 940 230 960 280 945"/>
+    <path d="M520 890 C570 875 610 895 660 885"/><path d="M540 950 C590 935 640 955 690 945"/>
+  </g>
+  <!-- 셔츠 깃 -->
+  <path d="M345 780 L398 878 L452 780 L430 772 L398 840 L366 772 Z" fill="#a69e8a"/>
+  <path d="M345 780 L366 772 L398 840 L398 878 Z" fill="#6f695a"/>
+
+  <!-- 목 -->
+  <path d="M345 680 C348 730 340 760 334 790 L462 790 C452 755 446 725 448 680 Z" fill="url(#neck)"/>
+  <path d="M352 700 C380 735 420 735 448 700 L448 740 C420 760 380 760 350 740 Z" fill="#3e281b" opacity="0.5"/>
+
+  <!-- 머리(뒤쪽 볼륨) -->
+  <path d="M262 470 C240 360 300 290 400 285 C500 282 552 350 545 455 C545 500 530 520 520 530 L512 420 L290 420 L280 540 C268 520 262 500 262 470 Z" fill="#26211d"/>
+
+  <!-- 얼굴 -->
+  <path d="M288 430 C282 520 300 600 340 650 C365 680 395 696 418 694 C450 690 480 664 500 620 C520 575 522 500 515 430 C500 380 450 360 400 360 C340 360 295 385 288 430 Z" fill="url(#skin)"/>
+  <!-- 광대 아래 그림자, 턱선 -->
+  <path d="M300 520 C315 560 330 600 352 640 C330 620 305 580 296 530 Z" fill="#3e281c" opacity="0.55"/>
+  <path d="M352 655 C380 690 430 698 470 668 C440 700 390 705 352 655 Z" fill="#3a2519" opacity="0.6"/>
+  <ellipse cx="470" cy="545" rx="34" ry="22" fill="#d49a7a" opacity="0.45" filter="url(#soft)"/>
+  <ellipse cx="335" cy="550" rx="26" ry="18" fill="#7a4a36" opacity="0.4" filter="url(#soft)"/>
+
+  <!-- 귀 -->
+  <path d="M508 455 C528 450 536 480 530 505 C526 525 512 532 504 525 Z" fill="#b5835f"/>
+  <path d="M512 470 C522 475 522 500 514 512" stroke="#6e4630" stroke-width="3" fill="none"/>
+
+  <!-- 짧은 파마머리: 회색 섞인 검정 -->
+  <path d="M272 455 C262 390 300 330 360 318 C410 305 470 312 510 345 C540 372 548 420 530 460 C522 430 505 405 480 395 C470 410 440 405 425 392 C405 405 375 402 360 392 C340 408 312 410 300 400 C290 420 282 440 272 455 Z" fill="#2e2925"/>
+  <g fill="none" stroke-linecap="round">
+    <g stroke="#58524c" stroke-width="7">
+      <path d="M300 360 c10 -14 26 -14 32 0"/><path d="M340 340 c10 -14 26 -14 32 0"/><path d="M385 330 c10 -14 26 -14 32 0"/>
+      <path d="M430 334 c10 -14 26 -14 32 0"/><path d="M470 350 c10 -14 26 -14 32 0"/><path d="M500 378 c10 -12 22 -10 26 4"/>
+    </g>
+    <g stroke="#8f8984" stroke-width="5" opacity="0.8">
+      <path d="M440 352 c8 -10 20 -10 26 0"/><path d="M478 370 c8 -10 20 -10 26 0"/><path d="M405 348 c8 -10 20 -10 26 0"/>
+      <path d="M505 405 c6 -8 16 -6 20 4"/>
+    </g>
+    <g stroke="#1a1714" stroke-width="5" opacity="0.7">
+      <path d="M285 400 c8 -12 22 -12 28 0"/><path d="M322 372 c8 -12 22 -12 28 0"/><path d="M362 365 c8 -12 22 -12 28 0"/>
+    </g>
+  </g>
+
+  <!-- 이마 주름 -->
+  <g stroke="#7b5440" stroke-width="2.5" fill="none" opacity="0.55" filter="url(#tiny)">
+    <path d="M345 402 C380 396 420 396 470 404"/><path d="M355 416 C390 411 425 411 462 418"/>
+  </g>
+
+  <!-- 눈썹: 오른쪽이 살짝 올라감 (비꼬는 표정) -->
+  <path d="M318 445 C335 432 360 430 382 438" stroke="#2a201a" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <path d="M420 432 C440 420 468 418 492 428" stroke="#3a2c22" stroke-width="7" fill="none" stroke-linecap="round"/>
+
+  <!-- 눈: 무거운 눈꺼풀, 지친 눈 -->
+  <g>
+    <path d="M326 472 C340 462 362 462 378 472 C362 478 340 478 326 472 Z" fill="#b8a690"/>
+    <circle cx="353" cy="472" r="7.5" fill="#2a1d15"/>
+    <path d="M322 471 C340 458 364 458 382 470" stroke="#1d1410" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M330 484 C345 492 365 491 378 482" stroke="#6e4835" stroke-width="4" fill="none" opacity="0.7"/>
+    <path d="M428 468 C442 458 466 458 482 468 C466 475 442 475 428 468 Z" fill="#cdbba2"/>
+    <circle cx="452" cy="468" r="7.5" fill="#2a1d15"/>
+    <circle cx="455" cy="465" r="2" fill="#e8dccb"/>
+    <path d="M424 467 C442 454 468 454 486 466" stroke="#1d1410" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M432 481 C447 490 468 489 482 479" stroke="#8a5d45" stroke-width="4" fill="none" opacity="0.7"/>
+  </g>
+
+  <!-- 코 -->
+  <path d="M398 470 C394 500 386 528 378 548 C388 556 405 558 418 550" stroke="#5a3a2a" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M404 472 C410 500 416 525 420 540" stroke="#e3b791" stroke-width="5" fill="none" opacity="0.7" stroke-linecap="round"/>
+  <path d="M372 548 C380 540 392 552 386 556" fill="#3c2519"/>
+  <path d="M410 552 C418 544 428 552 422 557" fill="#3c2519"/>
+
+  <!-- 팔자 주름 -->
+  <path d="M366 560 C352 585 350 605 358 622" stroke="#6a4432" stroke-width="4" fill="none" opacity="0.6"/>
+  <path d="M440 556 C458 578 466 600 462 620" stroke="#8a5c44" stroke-width="4" fill="none" opacity="0.5"/>
+
+  <!-- 입: 한쪽 입꼬리만 올라간 반쯤 웃음 -->
+  <path d="M362 604 C385 612 415 610 446 592 C420 600 390 604 362 604 Z" fill="#7c4436"/>
+  <path d="M362 604 C390 620 420 618 446 592 C420 612 392 616 362 604 Z" fill="#a0604e"/>
+  <path d="M360 603 C388 609 418 606 448 590" stroke="#3a1d16" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M446 590 C452 586 456 588 455 594" stroke="#5a3324" stroke-width="3" fill="none"/>
+
+  <!-- 손: 담배를 든 오른손이 턱 옆으로 -->
+  <path d="M500 780 C500 740 505 700 520 670 L540 600 C544 588 560 590 558 604 L548 660 L566 590 C570 576 588 580 585 594 L572 662 L590 610 C595 598 610 603 606 616 L590 680 C600 700 600 740 590 780 Z" fill="url(#hand)"/>
+  <path d="M500 780 C505 740 520 710 540 700 C520 720 512 750 512 780 Z" fill="#4e3222" opacity="0.6"/>
+  <!-- 손가락 사이 담배와 불씨 -->
+  <path d="M556 640 L640 568" stroke="#e8e0d0" stroke-width="9" stroke-linecap="round"/>
+  <path d="M556 640 L572 626" stroke="#b08a5a" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="641" cy="567" r="6" fill="#e0612a"/>
+  <circle cx="641" cy="567" r="12" fill="#f08a40" opacity="0.35" filter="url(#tiny)"/>
+  <!-- 잉크 묻은 손끝 -->
+  <g fill="#1d2433" opacity="0.85">
+    <ellipse cx="551" cy="602" rx="7" ry="5"/><ellipse cx="578" cy="592" rx="6" ry="5"/><ellipse cx="600" cy="614" rx="5" ry="4"/>
+  </g>
+  <!-- 카디건 소매 -->
+  <path d="M470 1024 C470 900 480 820 492 770 L600 770 C612 840 615 930 610 1024 Z" fill="#4f4931"/>
+  <path d="M492 770 L600 770 L604 800 L488 800 Z" fill="#3a3524"/>
+
+  <!-- 담배 연기 -->
+  <g fill="none" stroke-linecap="round" filter="url(#smoke)">
+    <path d="M641 560 C620 520 670 480 640 430 C610 380 660 330 630 270 C610 230 640 180 620 120" stroke="#b9b4a8" stroke-width="18" opacity="0.5"/>
+    <path d="M641 560 C660 520 620 470 655 420 C690 370 650 320 680 260" stroke="#cfcac0" stroke-width="10" opacity="0.4"/>
+  </g>
+</svg>
