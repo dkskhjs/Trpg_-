@@ -91,7 +91,7 @@ python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
 
 공통 구도: `wide establishing shot, no people in the foreground, eye level`
 
-완성: `inn` `inn_night` `square` `square_pale` `rally` `river` `river_beyond` `edge` `station` `market` `park_home` `graves` ✅ · 남은 것: `truck` `lockup` `finale` `dark` · 4일째 새 장소: `rail` `jeep_road` `bocheon` · 5일째 새 장소: `samjiyon` `monument` `pioneer_camp` `lab_tent` `bear_camp` `purge_post` `caravan_ice`
+완성: `inn` `inn_night` `square` `square_pale` `rally` `river` `edge` `station` `market` `park_home` `graves` ✅ · 남은 것: `truck` `lockup` `finale` `dark` · 4일째 새 장소: `rail` `jeep_road` `bocheon` · 5일째 새 장소: `samjiyon` `monument` `pioneer_camp` `lab_tent` `bear_camp` `purge_post` `caravan_ice`
 
 원본을 받으면 `python3 tools/prepare_backgrounds.py <폴더>`로 가공합니다. 원본은 `art_src/backgrounds/`에 보관되고, 블러를 먹인 버전이 `godot/art/scenes/`에 들어갑니다(블러 강도: `--blur 6`).
 `scene` 열은 게임 속 장면 이름입니다(이 이름으로 배경을 매칭합니다).
@@ -104,7 +104,7 @@ python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
 | `square_pale` | 청수리 광장 · 3일째 | `the same village square, but its northern half has been erased into flat blank white canvas, villagers' bundles left on the ground, the loudspeaker on the pole is a white silhouette` |
 | `rally` | 궐기대회 | `a village mass rally, crowd of sixty peasants with raised fists and red placards, a wooden podium with a man in a greatcoat, red banners, the white haze swelling at the far edge of the square as they shout` |
 | `river` | 압록강 둑 | `a riverbank on the Korean-Chinese border, barbed wire fence, a small guard post, the river flows but halfway across it the world ends in a silent flat white void, no far shore` |
-| `river_beyond` | 압록강 너머 (창백이 그려진 풍경) | 기획자가 직접 제공한 유화. 강 위에 고래 모양의 하얀 공백과 흩어지는 흰 점. 전용 셰이더(`bg_pale.gdshader`)로 일렁이고 빛나며, 처음 볼 때 막을 걷어 풍경을 먼저 보여준다. 블러 1.5 |
+| `river_beyond` | 압록강 너머 (창백이 그려진 풍경) | **보류 — 게임에서 뺐음, 새 그림 필요.** 이전 시안: 기획자가 직접 제공한 유화. 강 위에 고래 모양의 하얀 공백과 흩어지는 흰 점. 전용 셰이더(`bg_pale.gdshader`)로 일렁이고 빛나며, 처음 볼 때 막을 걷어 풍경을 먼저 보여준다. 블러 1.5 |
 | `edge` | 창백의 경계 | `a village dirt road that simply ends in a wall of featureless white, faint silhouettes of people standing and waiting inside the white` |
 | `station` | 기상관측소 | `a small concrete weather station on a hilltop, Stevenson screen, rusty wind vane and antenna, inside a cluttered desk with logbooks, an old valve radio, thick cigarette smoke` |
 | `market` | 장마당 뒷골목 | `a deserted black-market alley, plastic tarps and empty wooden stalls, scattered Chinese cigarette packs, cold wind, grey light` |

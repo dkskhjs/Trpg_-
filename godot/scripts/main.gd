@@ -70,7 +70,7 @@ var bg_shade: ColorRect
 var vista_fx: ShaderMaterial
 ## 창백이 그려진 풍경: 전용 셰이더를 씌운다. 처음 볼 때는 막을 걷어 풍경을 보여준 뒤(VISTA_REVEAL초)
 ## 글을 읽을 수 있을 만큼 다시 어둡게 한다. 값은 그 뒤의 막 농도.
-const VISTAS := {"river_beyond": 0.66}
+const VISTAS := {}   # 예: {"river_beyond": 0.66} — 지금은 쓰는 풍경 없음
 const VISTA_REVEAL := 2.2
 var typing_delay := 0.0   # 다음 타자 효과를 시작하기 전 기다릴 시간
 var typing: Tween
@@ -506,9 +506,7 @@ static func background_for(scene: String, day: int) -> String:
 		return "rally"
 	if "경계" in scene:
 		return "edge"
-	if "압록강 둑" in scene or "창백의 가장자리" in scene:
-		return "river_beyond"
-	if "압록강" in scene:
+	if "압록강" in scene or "창백의 가장자리" in scene:
 		return "river"
 	if "관측소" in scene:
 		return "station"
