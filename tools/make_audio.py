@@ -269,9 +269,58 @@ def speech(seconds, f0=145, rate=6.0, rise=0.5, vibrato=0.0, shout=True, pause=(
     return out[: int(seconds * SR)]
 
 
+# 웅변의 억양 윤곽. 0~1 위치 → 기준음 대비 비율. 구절마다 하나를 골라 단조로운 '음계'를 피한다.
+CONTOURS = {
+    "declare": lambda x: 0.30 - 0.40 * x + 0.10 * np.sin(np.pi * x * 1.5),   # 높게 시작해 가라앉는 서술조
+    "exhort":  lambda x: -0.05 + 0.55 * x ** 2,                             # 고조되다 끝에서 외침
+    "arch":    lambda x: 0.45 * np.sin(np.pi * x),                          # 가운데에서 정점
+    "call":    lambda x: 0.15 + 0.10 * np.cos(np.pi * x * 5),               # 부르고 받는 듯한 물결
+}
+
+
+def oration_phrase(f0, kind):
+    """억양 윤곽을 따라 음높이가 음절 사이로 미끄러지는 한 구절."""
+    n_syl = int(rng.integers(4, 11))
+    rate = rng.uniform(4.6, 6.4)
+    shape = CONTOURS[kind]
+    targets = [f0 * (1 + shape(i / max(1, n_syl - 1)) + rng.normal(0, 0.03)) for i in range(n_syl + 1)]
+    accents = rng.random(n_syl) < 0.25
+    names = list(VOWELS)
+    parts = []
+    for i in range(n_syl):
+        last = i == n_syl - 1
+        dur = rng.uniform(0.6, 1.4) / rate
+        if last:
+            dur *= 2.4 if kind == "exhort" else rng.uniform(1.2, 1.8)
+        tt = t_axis(dur)
+        a, b = targets[i], targets[i + 1]
+        if accents[i]:
+            a *= 1.12
+        if last:   # 마지막 음절: 외치거나, 툭 떨어뜨리거나
+            b = a * (1.06 if kind == "exhort" else rng.uniform(0.8, 0.9))
+        curve = a + (b - a) * (tt / dur) ** 1.3
+        amp = (0.75 + 0.35 * accents[i] + (0.35 if last and kind == "exhort" else 0)) * rng.uniform(0.85, 1.0)
+        v = vowel(curve, names[rng.integers(len(names))]) * env_ar(len(tt), 0.02, 0.06) * amp
+        if rng.random() < 0.7:
+            parts.append(consonant(rng.uniform(0.02, 0.06)))
+        parts.append(v)
+    return np.concatenate(parts)
+
+
 def orator(seconds):
-    """남성 웅변가: 낮게 시작해 구절 끝에서 외친다."""
-    return speech(seconds, f0=135, rate=5.5, rise=0.7)
+    """남성 웅변가: 구절마다 다른 억양으로, 사이사이 숨을 고르며."""
+    out = []
+    total = 0.0
+    kinds = list(CONTOURS)
+    rng.shuffle(kinds)
+    i = 0
+    while total < seconds:
+        ph = oration_phrase(rng.uniform(120, 150), kinds[i % len(kinds)])
+        gap = np.zeros(int(rng.uniform(0.35, 1.0) * SR))
+        out += [ph, gap]
+        total += (len(ph) + len(gap)) / SR
+        i += 1
+    return np.concatenate(out)[: int(seconds * SR)]
 
 
 def announcer(seconds):
@@ -321,7 +370,7 @@ def track_square():
     """광장: 멀리 확성기에서 아나운서 → 행진곡 → 웅변이 번갈아 흐른다."""
     m = march(2)                                  # ~33초
     a = announcer(12)
-    o = orator(12)
+    o = orator(9)
     prog = np.concatenate([a, np.zeros(SR), m, np.zeros(SR), o, np.zeros(2 * SR)])
     prog = loudspeaker(prog, drive=3.5, distance=0.35)
     amb = wind(len(prog) / SR, 0.35)
@@ -330,12 +379,19 @@ def track_square():
 
 def track_rally():
     """궐기대회: 단상의 웅변 → 군중의 구호 응답, 반복."""
+    patterns = [  # 짓-부-시-자! / 만-세! / 결-사-옹-위! / 받-들-자!
+        (("i", "u", "i", "a"), (0.22, 0.22, 0.22, 0.6)),
+        (("a", "e"), (0.32, 0.75)),
+        (("eo", "a", "o", "i"), (0.2, 0.2, 0.26, 0.62)),
+        (("a", "eu", "a"), (0.24, 0.24, 0.66)),
+    ]
     parts = []
-    for _ in range(4):
-        lead = loudspeaker(orator(4.5), drive=4.5)
-        chant = crowd_chant()
-        chant = reverb(np.concatenate([chant, chant, crowd_chant()]), 1.8, 0.45)
-        parts += [lead, np.zeros(int(0.3 * SR)), chant * 1.4, np.zeros(int(0.6 * SR))]
+    for k in range(4):
+        lead = loudspeaker(orator(2.5), drive=4.5)
+        syl, rhythm = patterns[k]
+        reps = [crowd_chant(syl, rhythm) for _ in range(int(rng.integers(2, 4)))]
+        chant = reverb(np.concatenate(reps), 1.8, 0.45)
+        parts += [lead, np.zeros(int(0.3 * SR)), chant * 1.4, np.zeros(int(rng.uniform(0.5, 1.0) * SR))]
     x = np.concatenate(parts)
     murmur = filt(noise(len(x) / SR), "bandpass", [200, 1200], 2) * 0.06
     return loopable(x + murmur)
