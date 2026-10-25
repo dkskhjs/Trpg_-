@@ -32,7 +32,7 @@ func new_game(arch_index: int) -> void:
 	S = {
 		"arch": arch.id, "attrs": arch.attrs.duplicate(), "bought": {}, "sp": 2,
 		"hp": 0, "morale": 0, "node": "", "flags": {}, "visited": {}, "checks": {}, "used": {},
-		"pale": 0, "ticks": 0, "day": 1, "day_tick": 0, "names": [], "ws": 0,
+		"pale": 0, "ticks": 0, "day": 1, "day_tick": 0, "names": [], "ws": 0, "rep": {},
 		"thoughts": {"known": [], "active": "", "progress": 0, "done": []}, "log": [],
 	}
 	S.hp = max_hp()
@@ -61,9 +61,19 @@ func thought_bonus(k: String) -> int:
 	return b
 
 
+## 가지고 있는 장비의 기술 보너스
+func item_bonus(k: String) -> int:
+	var b := 0
+	for id in world.ITEMS:
+		var it: Dictionary = world.ITEMS[id]
+		if it.has("bonus") and flag("item_" + id):
+			b += int(it.bonus.get(k, 0))
+	return b
+
+
 func level(k: String) -> int:
 	var attr: String = world.SKILLS[k].attr
-	return maxi(0, int(S.attrs[attr]) + int(S.bought.get(k, 0)) + thought_bonus(k))
+	return maxi(0, int(S.attrs[attr]) + int(S.bought.get(k, 0)) + thought_bonus(k) + item_bonus(k))
 
 
 func skill_color(k: String) -> String:
@@ -106,7 +116,18 @@ func clock_text() -> String:
 
 # ---------- 조건식 (Expression의 base_instance로 이 객체를 넘긴다) ----------
 func flag(n: String) -> bool:
-	return S.flags.get(n, false)
+	return bool(S.flags.get(n, false))
+
+
+## 소지품 개수 (item_<id> 플래그에 개수를 저장한다)
+func item_count(k: String) -> int:
+	var v = S.flags.get("item_" + k, 0)
+	return int(v) if (v is int or v is float) else (1 if v else 0)
+
+
+## 세력 호감도 (조건식에서 rep("bear") 형태로 쓴다)
+func rep(k: String) -> int:
+	return int(S.get("rep", {}).get(k, 0))
 
 
 func visited(n: String) -> int:
@@ -232,11 +253,22 @@ func apply(fx) -> void:
 	if fx.has("ws"):
 		S.ws = ws() + int(fx.ws)
 	for k in _as_list(fx.get("item")):
-		if not flag("item_" + k):
-			S.flags["item_" + k] = true
-			fx_note("소지품: " + world.ITEMS[k].name)
+		S.flags["item_" + k] = item_count(k) + 1
+		fx_note("소지품: " + world.ITEMS[k].name)
 	for k in _as_list(fx.get("unitem")):
-		S.flags.erase("item_" + k)
+		var n := item_count(k) - 1
+		if n > 0:
+			S.flags["item_" + k] = n
+		else:
+			S.flags.erase("item_" + k)
+	if fx.has("rep"):
+		if not S.has("rep"):
+			S.rep = {}
+		for k in fx.rep:
+			var v := int(fx.rep[k])
+			S.rep[k] = rep(k) + v
+			if v != 0:
+				fx_note("%s 호감도 %+d" % [world.FACTIONS[k].name, v])
 	if fx.has("day"):
 		S.day = int(fx.day)
 		S.day_tick = S.ticks
@@ -315,12 +347,12 @@ func go(id: String) -> void:
 ## 인물 화면의 추가 칸: [[제목, [줄...]]]  소지품 · 동행 · 창백 상황
 func sheet_extras() -> Array:
 	var out := []
-	var items := []
-	for k in world.ITEMS:
-		if flag("item_" + k):
-			items.append("%s\n%s" % [world.ITEMS[k].name, world.ITEMS[k].desc])
-	if items.size() > 0:
-		out.append(["소지품", items])
+	var reps := []
+	for k in world.FACTIONS:
+		if S.get("rep", {}).has(k):
+			reps.append("%s  %d\n%s" % [world.FACTIONS[k].name, rep(k), world.FACTIONS[k].desc])
+	if reps.size() > 0:
+		out.append(["세력 호감도", reps])
 	var comp := []
 	if flag("choi_with"):
 		comp.append("최경철 — 검열국 중좌")
@@ -333,6 +365,36 @@ func sheet_extras() -> Array:
 	if flag("report_done"):
 		out.append(["창백 상황", ["청수리: " + ("물러남" if ws() >= 3 else "확장")]])
 	return out
+
+
+## 소지품 목록: [{id, name, desc, count, effect, usable}]
+func items_list() -> Array:
+	var out := []
+	var names := {"hp": "체력", "morale": "사기", "pale": "창백 노출"}
+	for k in world.ITEMS:
+		var n := item_count(k)
+		if n <= 0:
+			continue
+		var it: Dictionary = world.ITEMS[k]
+		var eff := []
+		if it.has("use"):
+			for e in it.use:
+				eff.append("%s %+d" % [names[e], int(it.use[e])])
+		elif it.has("bonus"):
+			for e in it.bonus:
+				eff.append("%s +%d" % [world.SKILLS[e].name, int(it.bonus[e])])
+		out.append({"id": k, "name": it.name, "desc": it.desc, "count": n, "effect": ", ".join(eff), "usable": it.has("use")})
+	return out
+
+
+## 음식을 먹는다.
+func use_item(k: String) -> void:
+	var it: Dictionary = world.ITEMS.get(k, {})
+	if not it.has("use") or item_count(k) <= 0:
+		return
+	push("you", "[color=#8f877a][i]— %s을(를) 먹는다.[/i][/color]" % esc(it.name))
+	apply({"unitem": k})
+	apply(it.use)
 
 
 ## 화면에 보일 선택지: [{opt, id, locked, lv}]
@@ -403,5 +465,7 @@ func load_game() -> bool:
 	if not data is Dictionary:
 		return false
 	S = data
+	if not S.has("rep"):
+		S.rep = {}
 	log_serial = 0
 	return true

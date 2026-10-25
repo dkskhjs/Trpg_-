@@ -16,7 +16,7 @@ const worldSrc = scripts.find(s => s.includes('const ATTRS'));
 const storySrc = scripts.find(s => s.includes('const STORY'));
 
 const ctx = vm.createContext({});
-const data = vm.runInContext(`${worldSrc}\n${storySrc}\n({ATTRS, SKILLS, ARCHETYPES, THOUGHTS, ITEMS, DIFF, STORY})`, ctx);
+const data = vm.runInContext(`${worldSrc}\n${storySrc}\n({ATTRS, SKILLS, ARCHETYPES, THOUGHTS, ITEMS, FACTIONS, DIFF, STORY})`, ctx);
 
 function parseFn(fn){
   const src = '(' + fn.toString() + ')';
@@ -30,6 +30,7 @@ function condExpr(src, node){
        .replace(/G\.visited\.(\w+)/g, 'visited("$1")')
        .replace(/G\.names\.length/g, 'names_count()')
        .replace(/G\.ws\b/g, 'ws()')
+       .replace(/G\.rep\.(\w+)/g, 'rep("$1")')
        .replace(/G\.names\.includes\('([^']*)'\)/g, 'has_name("$1")')
        .replace(/\|\|/g, ' or ')
        .replace(/&&/g, ' and ')
@@ -82,13 +83,19 @@ function textOf(text){
 function fxOf(fx){
   if (typeof fx !== 'function') return fx;
   const {src, body} = parseFn(fx);
+  // 삼항식(중첩 가능) → {if, then, else}
+  const conv = n => {
+    if (n.type === 'ConditionalExpression'){
+      const out = {if: condExpr(src, n.test)};
+      const t = conv(n.consequent), e = conv(n.alternate);
+      if (t) out.then = t;
+      if (e) out.else = e;
+      return out;
+    }
+    return vm.runInContext('(' + src.slice(n.start, n.end) + ')', ctx);
+  };
   if (body.type !== 'ConditionalExpression') throw new Error('fx 함수는 삼항식이어야 함');
-  const val = n => vm.runInContext('(' + src.slice(n.start, n.end) + ')', ctx);
-  const out = {if: condExpr(src, body.test)};
-  const t = val(body.consequent), e = val(body.alternate);
-  if (t) out.then = t;
-  if (e) out.else = e;
-  return out;
+  return conv(body);
 }
 
 const story = {};
@@ -106,7 +113,7 @@ for (const [id, n] of Object.entries(data.STORY)){
   story[id] = out;
 }
 
-const world = {ATTRS: data.ATTRS, SKILLS: data.SKILLS, ARCHETYPES: data.ARCHETYPES, THOUGHTS: data.THOUGHTS, ITEMS: data.ITEMS, DIFF: data.DIFF};
+const world = {ATTRS: data.ATTRS, SKILLS: data.SKILLS, ARCHETYPES: data.ARCHETYPES, THOUGHTS: data.THOUGHTS, ITEMS: data.ITEMS, FACTIONS: data.FACTIONS, DIFF: data.DIFF};
 const outDir = path.join(root, 'godot', 'data');
 fs.mkdirSync(outDir, {recursive: true});
 fs.writeFileSync(path.join(outDir, 'story.json'), JSON.stringify(story, null, 1));

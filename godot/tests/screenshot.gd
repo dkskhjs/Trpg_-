@@ -8,6 +8,9 @@ func _init() -> void:
 	var main = load("res://main.tscn").instantiate()
 	root.add_child(main)
 	await _frames(5)
+	await _snap(out + "/g_title.png")
+	main._open_start()
+	await _frames(5)
 	await _snap(out + "/g_start.png")
 	main._start_new(1)
 	for i in 3:
@@ -20,6 +23,9 @@ func _init() -> void:
 	main._open_sheet()
 	await _frames(5)
 	await _snap(out + "/g_sheet.png")
+	main._open_settings()
+	await _frames(5)
+	await _snap(out + "/g_settings.png")
 	main._close_modal()
 	# 창백 노출이 높을 때 강가 화면
 	main.game.go("station")

@@ -20,6 +20,7 @@ const SFX := {
 }
 
 var muted := false
+var music_gain_db := 0.0   # 설정의 음악 크기
 var _amb := Layer.new()
 var _music := Layer.new()
 var _pale: AudioStreamPlayer
@@ -53,7 +54,7 @@ func _load(name: String, loop: bool) -> AudioStream:
 static func ambience_for(scene: String, day: int, ending: bool) -> String:
 	if ending:
 		return "silence"
-	if "궐기대회" in scene:
+	if "궐기대회" in scene or "기념비 광장" in scene:
 		return "rally"
 	if "관측소" in scene:
 		return "radio"
@@ -102,7 +103,7 @@ func update(scene: String, node_id: String, day: int, ending: bool, pale: float,
 	var amb := ambience_for(scene, day, ending)
 	_amb.switch(amb, _load("amb_" + amb, true) if amb != "silence" else null, AMB_DB.get(amb, -80.0))
 	var mus := music_for(scene, node_id, day, ending, minutes)
-	_music.switch(mus, _load("mus_" + mus, true) if mus != "silence" else null, MUSIC_DB)
+	_music.switch(mus, _load("mus_" + mus, true) if mus != "silence" else null, MUSIC_DB + music_gain_db)
 	var edge := edge_for(scene)
 	var level := clampf(pale + edge * 0.8 + (0.7 if ending else 0.0), 0.0, 1.0)
 	var target := lerpf(PALE_MIN_DB, PALE_MAX_DB, sqrt(level))
@@ -139,6 +140,21 @@ class Layer:
 			nxt.volume_db = -80.0
 			nxt.play()
 			owner.create_tween().tween_property(nxt, "volume_db", db, FADE)
+
+
+## 첫 화면: 환경음 없이 메인 테마만.
+func play_title() -> void:
+	_amb.switch("silence", null, -80.0)
+	_music.switch("morning", _load("mus_morning", true), MUSIC_DB + music_gain_db)
+	create_tween().tween_property(_pale, "volume_db", PALE_MIN_DB, FADE)
+
+
+func set_volumes(master: float, music: float) -> void:
+	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(master, 0.0001)))
+	music_gain_db = linear_to_db(maxf(music, 0.0001))
+	var p: AudioStreamPlayer = _music.players[_music.active]
+	if _music.current != "silence" and _music.current != "":
+		p.volume_db = MUSIC_DB + music_gain_db
 
 
 func play_events(events: Array) -> void:

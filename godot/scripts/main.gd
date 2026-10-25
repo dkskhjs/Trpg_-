@@ -9,7 +9,6 @@ const C_DIM := Color("#8f877a")
 const C_OPT := Color("#d9c08a")
 const C_HP := Color("#d0625a")
 const C_MO := Color("#a68be0")
-const TYPE_CPS := 110.0   # 타자기 효과: 초당 글자 수
 ## 대사하는 인물 → [초상화 파일(art/portraits/<id>.webp), 이름표, 물감 방울 자리].
 ## 초상화는 흑백이고, 방울 자리(x, y, 반지름 — 그림 기준 0~1)에만 원래 색이 돌아온다.
 ## 위치는 tools/tone_preview.py로 미리 본다(같은 공식).
@@ -25,6 +24,14 @@ const PORTRAITS := {
 	"철도원": ["mun", "문봉식 — 협궤 운전수", []],
 	"문봉식": ["mun", "문봉식 — 협궤 운전수", []],
 	"윤해란": ["yoon", "윤해란 — 중앙당 지도원", []],
+	"리철": ["cheol", "리철 — 소년단원", []],
+	"김선희": ["kimsh", "김선희 — 혁명전적지 해설강사", []],
+	"허명진": ["heo", "허명진 — 창백 연구소 연구사", []],
+	"도학수": ["do", "도학수 — 곰쫓사 조사단장", []],
+	"곽만석": ["kwak", "곽만석 — 백두산 포수", []],
+	"서은하": ["seo", "서은하 — 곰쫓사 생물학 연구원", []],
+	"강동혁": ["kang", "강동혁 — 정리반장", []],
+	"백순자": ["baek", "백순자 — 흰 길 상단", []],
 }
 
 var game := Game.new()
@@ -55,6 +62,8 @@ var backgrounds: Array[TextureRect] = []
 var bg_active := 0
 var bg_id := ""
 var typing: Tween
+var settings := Settings.load_or_default()
+var title: TitleScreen
 var instant_log := false
 
 
@@ -63,7 +72,8 @@ func _ready() -> void:
 	_build_layout()
 	audio = AudioDirector.new()
 	add_child(audio)
-	_open_start()
+	audio.set_volumes(settings.master, settings.music)
+	_show_title()
 
 
 # ---------- 테마 ----------
@@ -160,7 +170,7 @@ func _build_layout() -> void:
 	thought_btn = _side_button(buttons, "사상함", _open_thoughts)
 	_side_button(buttons, "저장", _on_save)
 	_side_button(buttons, "불러오기", _on_load)
-	_side_button(buttons, "새 게임", _open_start)
+	_side_button(buttons, "차림표", _show_title)
 	sound_btn = _side_button(buttons, "소리: 켜짐", _toggle_sound)
 
 	# 오른쪽: 로그 + 선택지
@@ -225,6 +235,13 @@ func _build_layout() -> void:
 	opts_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	opts_margin.add_child(opts_box)
 
+	title = TitleScreen.new()
+	add_child(title)
+	title.new_game.connect(_open_start)
+	title.continue_game.connect(_on_continue)
+	title.open_settings.connect(_open_settings)
+	title.open_credits.connect(_open_credits)
+	title.quit_game.connect(func(): get_tree().quit())
 	_build_modal()
 	_build_pale_overlay()
 
@@ -278,7 +295,7 @@ func _build_modal() -> void:
 	modal.color = Color(0, 0, 0, 0.78)
 	modal.set_anchors_preset(Control.PRESET_FULL_RECT)
 	modal.gui_input.connect(func(e):
-		if e is InputEventMouseButton and e.pressed and game.has_game():
+		if e is InputEventMouseButton and e.pressed and modal.get_meta("closable", false):
 			_close_modal())
 	add_child(modal)
 	var center := CenterContainer.new()
@@ -319,8 +336,9 @@ func _update_atmosphere() -> void:
 	var pale := game.pale_intensity()
 	audio.update(scene, game.S.node, int(game.S.day), ending, pale, game.minutes())
 	audio.play_events(game.events)
-	_tween_param("intensity", clampf(pale + (0.5 if ending and "창백" in scene else 0.0), 0.0, 1.0), 2.0)
-	_tween_param("edge", AudioDirector.edge_for(scene), 2.0)
+	var k := settings.pale_strength
+	_tween_param("intensity", clampf((pale + (0.5 if ending and "창백" in scene else 0.0)) * k, 0.0, 1.0), 2.0)
+	_tween_param("edge", AudioDirector.edge_for(scene) * k, 2.0)
 	if "pale_up" in game.events:
 		pale_fx.set_shader_parameter("pulse", 1.0)
 		_tween_param("pulse", 0.0, 1.8)
@@ -358,7 +376,7 @@ func _render_log() -> void:
 	log_view.visible_characters = before
 	opts_box.visible = false
 	typing = create_tween()
-	typing.tween_property(log_view, "visible_characters", after, (after - before) / TYPE_CPS)
+	typing.tween_property(log_view, "visible_characters", after, (after - before) / settings.text_speed)
 	typing.finished.connect(_finish_typing)
 
 
@@ -400,6 +418,20 @@ static func background_for(scene: String, day: int) -> String:
 		return "keep"
 	if "구류실" in scene or "결말" in scene or "어둠" in scene:
 		return ""
+	if "기념비 광장" in scene:
+		return "monument"
+	if "답사숙영소" in scene:
+		return "pioneer_camp"
+	if "연구소 천막" in scene:
+		return "lab_tent"
+	if "곰쫓사" in scene or "곰 발자국" in scene:
+		return "bear_camp"
+	if "정리반 지휘소" in scene:
+		return "purge_post"
+	if "흰 길 상단" in scene:
+		return "caravan_ice"
+	if "삼지연" in scene:
+		return "samjiyon"
 	if "협궤 철길" in scene:
 		return "rail"
 	if "하얀 길" in scene:
@@ -523,7 +555,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
 	if modal.visible:
-		if event.keycode == KEY_ESCAPE and game.has_game():
+		if event.keycode == KEY_ESCAPE and modal.get_meta("closable", false):
 			_close_modal()
 		return
 	if _is_typing():
@@ -536,10 +568,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 # ---------- 모달 ----------
-func _open_modal() -> void:
+## closable: 1이면 닫기 단추와 바깥 누르기로 닫힌다. -1이면 판이 진행 중일 때만.
+func _open_modal(closable: int = -1) -> void:
 	for c in modal_body.get_children():
 		c.queue_free()
-	if game.has_game():
+	var can_close := game.has_game() if closable < 0 else closable == 1
+	modal.set_meta("closable", can_close)
+	if can_close:
 		var close := Button.new()
 		close.text = "닫기"
 		close.size_flags_horizontal = Control.SIZE_SHRINK_END
@@ -570,8 +605,8 @@ func _modal_text(t: String, col: Color = C_DIM, size: int = 16) -> Label:
 
 
 func _open_start() -> void:
-	_open_modal()
-	_modal_title("창백한 청수리")
+	_open_modal(1)
+	_modal_title("새놀이")
 	_modal_text("량강도 백수군 청수리. 압록강 너머가 사라졌다. 평양은 그것을 \"미제의 기상무기\"라 부른다. 당신은 조사를 위해 파견된 국가보위성 소좌다. 그리고 당신의 이름이 지워지고 있다.")
 	_modal_text("출신을 고르시오", C_INK, 19)
 	var grid := GridContainer.new()
@@ -600,7 +635,74 @@ func _start_new(i: int) -> void:
 	game.new_game(i)
 	rendered_serial = 0
 	_close_modal()
+	title.hide()
 	_refresh()
+
+
+# ---------- 첫 화면 ----------
+func _show_title() -> void:
+	_close_modal()
+	title.refresh(game.has_game() or FileAccess.file_exists(Game.SAVE_PATH))
+	title.show()
+	audio.play_title()
+
+
+## 이어하기: 진행 중인 판이 있으면 그대로 돌아가고, 없으면 저장한 판을 불러온다.
+func _on_continue() -> void:
+	if not game.has_game():
+		_on_load()
+		if not game.has_game():
+			return
+	title.hide()
+	_close_modal()
+	_update_atmosphere()
+
+
+func _open_settings() -> void:
+	_open_modal(1)
+	_modal_title("설정")
+	_setting_slider("소리 크기", settings.master, 0.0, 1.0, func(v):
+		settings.master = v
+		audio.set_volumes(settings.master, settings.music))
+	_setting_slider("음악 크기", settings.music, 0.0, 1.0, func(v):
+		settings.music = v
+		audio.set_volumes(settings.master, settings.music))
+	_setting_slider("글자 나오는 속도", settings.text_speed, 30.0, 400.0, func(v): settings.text_speed = v)
+	_setting_slider("창백 효과 세기", settings.pale_strength, 0.0, 1.5, func(v):
+		settings.pale_strength = v
+		if game.has_game():
+			_update_atmosphere())
+	_modal_text("설정은 자동으로 보관됩니다.", C_DIM, 14)
+
+
+func _setting_slider(label: String, value: float, lo: float, hi: float, on_change: Callable) -> void:
+	_modal_text(label, C_INK, 18)
+	var s := HSlider.new()
+	s.min_value = lo
+	s.max_value = hi
+	s.step = (hi - lo) / 100.0
+	s.value = value
+	s.custom_minimum_size = Vector2(500, 28)
+	s.value_changed.connect(func(v):
+		on_change.call(v)
+		settings.save())
+	modal_body.add_child(s)
+
+
+func _open_credits() -> void:
+	_open_modal(1)
+	_modal_title("만든이들")
+	for line in [
+		["기획 · 이야기 방향", "dkskhjs"],
+		["글 · 프로그람 · 음악 합성", "Claude (Anthropic)"],
+		["인물 · 배경 그림", "Gemini로 생성, 기획자 감수"],
+		["음악 · 소리", "모두 합성음 — tools/make_audio.py, tools/make_music.py"],
+		["글꼴", "나눔명조 (SIL Open Font License 1.1)"],
+		["엔진", "Godot Engine (MIT 허가)"],
+	]:
+		_modal_text(line[0], C_DIM, 14)
+		_modal_text(line[1], C_INK, 19)
+	_modal_text("\n이 놀이는 꾸며낸 이야기이며, 실존 인물·단체와 관계없습니다.", C_DIM, 13)
 
 
 func _open_sheet() -> void:
@@ -611,6 +713,28 @@ func _open_sheet() -> void:
 	_modal_text("기술 점수: %d · 각 기술은 속성 값만큼 추가로 올릴 수 있다." % int(game.S.sp))
 	if game.S.names.size() > 0:
 		_modal_text("수첩 — 기억한 이름: " + " · ".join(game.S.names), C_INK, 15)
+	var items := game.items_list()
+	if items.size() > 0:
+		_modal_text("소지품", C_INK, 19)
+		for it in items:
+			var row := HBoxContainer.new()
+			modal_body.add_child(row)
+			var l := Label.new()
+			l.text = "%s%s\n%s%s" % [it.name, (" ×%d" % it.count) if it.count > 1 else "", it.desc, (" · " + it.effect) if it.effect != "" else ""]
+			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			l.add_theme_font_size_override("font_size", 14)
+			l.add_theme_color_override("font_color", C_DIM)
+			row.add_child(l)
+			if it.usable:
+				var b := Button.new()
+				b.text = "먹는다"
+				var id: String = it.id
+				b.pressed.connect(func():
+					game.use_item(id)
+					_open_sheet()
+					_refresh())
+				row.add_child(b)
 	for section in game.sheet_extras():
 		_modal_text(section[0], C_INK, 19)
 		for line in section[1]:

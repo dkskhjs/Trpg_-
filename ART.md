@@ -29,7 +29,27 @@ rural North Korea 1990s–2000s, no text, no lettering, no watermark
 | ChatGPT / Gemini | 첫 이미지가 나오면 "같은 화풍으로 다음 인물"이라고 이어서 요청하면 일관성이 유지됩니다 |
 | SD / Flux | 네거티브 프롬프트: `text, letters, watermark, flag, photo, 3d render, anime, smooth digital art` |
 
-## 2. 규격과 파일 위치
+## 2. Gemini로 바로 만들기
+
+`ART.md`의 표가 곧 그림 목록입니다. 아래 스크립트는 이 문서의 표에서 `id`와 프롬프트를 읽고, 1장의 스타일 블록을 앞에 붙여 Gemini 이미지 API로 그림을 만든 뒤 게임 폴더에 넣습니다.
+
+```sh
+export GEMINI_API_KEY=...                       # 세션 환경 변수로 넣어두면 생략
+python3 tools/gen_art.py --list                 # 목록과 완성 여부 보기
+python3 tools/gen_art.py --missing              # 아직 없는 그림 전부 만들기
+python3 tools/gen_art.py choi elder monument    # 골라서 만들기 (있으면 덮어씀)
+python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
+```
+
+- **초상화**는 완성된 주인공 초상화를, **배경**은 완성된 광장 그림을 참고 이미지로 함께 보내서 화풍을 맞춥니다.
+- 결과물 위치:
+  - 초상화: `godot/art/portraits/<id>.webp`
+  - 배경: 원본은 `art_src/backgrounds/`, 블러 버전은 `godot/art/scenes/`
+  - 소지품: `godot/art/items/<id>.webp`
+- 새 초상화는 물감 방울 자리를 잡아야 색이 돌아옵니다. 자리를 잡기 전에는 흑백으로만 보입니다.
+- 모델을 바꾸려면 `GEMINI_IMAGE_MODEL` 환경 변수를 쓰세요(기본: `gemini-2.5-flash-image`).
+
+## 2-1. 규격과 파일 위치
 
 | 종류 | 비율 | 권장 크기 | 저장 위치 |
 |---|---|---|---|
@@ -69,7 +89,7 @@ rural North Korea 1990s–2000s, no text, no lettering, no watermark
 
 공통 구도: `wide establishing shot, no people in the foreground, eye level`
 
-완성: `inn` `inn_night` `square` `square_pale` `rally` `river` `edge` `station` ✅ · 남은 것: `market` `park_home` `graves` `truck` `lockup` `finale` `dark` · 4일째 새 장소: `rail` `jeep_road` `bocheon`
+완성: `inn` `inn_night` `square` `square_pale` `rally` `river` `edge` `station` ✅ · 남은 것: `market` `park_home` `graves` `truck` `lockup` `finale` `dark` · 4일째 새 장소: `rail` `jeep_road` `bocheon` · 5일째 새 장소: `samjiyon` `monument` `pioneer_camp` `lab_tent` `bear_camp` `purge_post` `caravan_ice`
 
 원본을 받으면 `python3 tools/prepare_backgrounds.py <폴더>`로 가공합니다. 원본은 `art_src/backgrounds/`에 보관되고, 블러를 먹인 버전이 `godot/art/scenes/`에 들어갑니다(블러 강도: `--blur 6`).
 `scene` 열은 게임 속 장면 이름입니다(이 이름으로 배경을 매칭합니다).
@@ -93,14 +113,24 @@ rural North Korea 1990s–2000s, no text, no lettering, no watermark
 | `rail` | 협궤 철길 (4일째, 물러남) | `a rusted narrow-gauge railway along a frozen river, a small hand-pushed rail cart, patches of blank white haze left beside the tracks, faint factory lights of a Chinese city across the river` |
 | `jeep_road` | 하얀 길 (4일째, 확장) | `a military jeep with a loudspeaker on its roof driving on a road that is solid blank white, only a few meters of grey road appear in front of its wheels, mountains fading into white` |
 | `bocheon` | 보천 갈림길 (4일째 밤) | `a tiny abandoned mountain railway station at night, collapsed roof, wall clock stopped, small coal stove glowing, the northern sky beyond the window a tall silent white` |
+| `samjiyon` | 삼지연 읍 (5일째) | `a small model mountain town under a tall silent white sky, neat identical houses, a frozen lake, snow that is too white, distant forested slopes of a great mountain` |
+| `monument` | 삼지연 기념비 광장 | `a vast monument plaza with an enormous empty stone pedestal at the center, the statue missing, a ring of forty people in winter coats walking around it reciting, red banners with illegible strokes, the pedestal area blank white` |
+| `pioneer_camp` | 답사숙영소 | `a large wooden dormitory room, thirty schoolchildren with red neckerchiefs sitting in a circle on the floor, one boy reading from a roll book, frost on the windows` |
+| `lab_tent` | 연구소 천막 | `a research tent by a frozen lake, generator, analog gauges, dozens of glass jars filled with swirling white haze, labels on the jars illegible` |
+| `bear_camp` | 곰쫓사 야영지 | `two canvas tents and a campfire burning mugwort at the edge of a forest, where blank white begins, huge bear footprints pressed into the white` |
+| `purge_post` | 정리반 지휘소 | `army barracks with six oil drums burning boxes of documents, soldiers emptying files into the fire, thick white smoke rising and whitening the sky` |
+| `caravan_ice` | 흰 길 상단 (얼음판) | `a frozen lake with twelve sleds tied together by ropes, smugglers in fur coats with name tags, heading toward a blank white horizon` |
 | `dark` | 어둠 | `almost total darkness, the faint outline of a loudspeaker horn, a single sliver of white light` |
 
-### 세력 인물 후보 (확정되면 진행)
+### 세력 인물 (5일째)
 | id | 인물 | 프롬프트 |
 |---|---|---|
 | `do` | 도학수 교수. 단군신화 연구대장, 70대 | `an elderly Korean archaeologist in his 70s, round wire glasses, worn field jacket over a suit, holding an old bone fragment wrapped in cloth, guilt in his eyes, mountain cold on his breath` |
 | `kwak` | 곽만석. 백두산 포수, 50대 | `a rugged Korean mountain hunter in his 50s, fur hat, old hunting rifle, snow on his shoulders, squinting at tracks in the snow` |
 | `seo` | 서은하. 생물학 연구원, 20대 | `a young Korean woman biologist in her 20s, padded lab coat over winter clothes, specimen jars and a notebook, eager intense eyes` |
+| `heo` | 허명진. 창백 연구소 연구사, 40대 | `a thin Korean physicist in his 40s, round glasses, padded lab coat, holding a glass jar filled with swirling blank white haze up to the light, curious and uneasy expression` |
+| `kang` | 강동혁. 정리반장, 50대 | `a hard-faced Korean colonel in his 50s, military greatcoat, red shoulder boards, standing before an oil drum fire full of burning papers, white smoke rising behind him, expressionless` |
+| `baek` | 백순자. 흰 길 상단 우두머리, 60대 | `a shrewd Korean-Chinese woman merchant in her 60s, thick fur coat and hat, sled rope coiled on her shoulder, wry smile, a name tag pinned to her coat` |
 | `white_bear` | 하얀 곰 (장면 그림) | `a huge pale bear walking through a blank white snowfield, its fur the same color as the void, only its dark eyes and footprints visible` |
 
 ### 5일째 이후 예정 장소
