@@ -3,6 +3,7 @@
 디스코 엘리시움의 **창백(The Pale)**이 북한 압록강 국경 마을에 나타난다는 설정의 텍스트 CRPG이자 TRPG입니다.
 
 - **CRPG**: `index.html`을 브라우저로 열면 바로 플레이할 수 있습니다. 빌드나 서버가 필요 없습니다.
+- **Godot 버전**: [`godot/`](godot/README.md) 폴더를 Godot 4.3 이상에서 열고 F5를 누르면 됩니다. 데스크톱과 모바일용으로 빌드할 수 있습니다.
 - **TRPG**: [`RULES.md`](RULES.md)에 테이블에서 쓰는 규칙과 GM용 시나리오가 있습니다.
 
 ## 특징
@@ -28,3 +29,5 @@ options:[
   {t:'판정 선택지', check:{s:'rhet', dc:12, red:true}, ok:'win', no:'lose', req:['x'], not:['y']},
 ]},
 ```
+
+시나리오를 고친 뒤에는 `npm install && npm run export`를 실행해 Godot용 JSON(`godot/data/`)을 다시 만드세요.

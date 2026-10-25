@@ -1,0 +1,10 @@
+{
+  "name": "pale-chungsu",
+  "private": true,
+  "scripts": {
+    "export": "node tools/export_story.js"
+  },
+  "devDependencies": {
+    "acorn": "8.12.1"
+  }
+}

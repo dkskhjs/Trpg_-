@@ -84,11 +84,11 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div class="bar"><span>사기</span><span class="pips" id="mo"></span></div>
     <div id="paleMeter"></div>
     <div class="side-btns">
-      <button onclick="openSheet()">인물 · 기술 <span id="spBadge"></span></button>
-      <button onclick="openThoughts()">사상함 <span id="thBadge"></span></button>
-      <button onclick="saveGame()">저장</button>
-      <button onclick="loadGame()">불러오기</button>
-      <button onclick="openStart()">새 게임</button>
+      <button data-act="sheet">인물 · 기술 <span id="spBadge"></span></button>
+      <button data-act="thoughts">사상함 <span id="thBadge"></span></button>
+      <button data-act="save">저장</button>
+      <button data-act="load">불러오기</button>
+      <button data-act="start">새 게임</button>
     </div>
   </aside>
   <main id="main">
@@ -96,6 +96,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div id="opts"></div>
   </main>
 </div>
+<noscript><p style="padding:20px">이 게임은 자바스크립트가 필요합니다. 파일을 브라우저(Chrome, Safari 등)로 직접 열어주세요.</p></noscript>
 <div class="modal" id="modal"><div class="card" id="card"></div></div>
 
 <!-- ============================================================
@@ -1277,13 +1278,13 @@ function renderSide(){
 // ---------- modals ----------
 function openModal(html){ $('card').innerHTML = html; $('modal').classList.add('show'); }
 function closeModal(){ $('modal').classList.remove('show'); }
-const closeBtn = () => G ? `<button class="close" onclick="closeModal()">닫기</button>` : '';
+const closeBtn = () => G ? `<button class="close" data-act="close">닫기</button>` : '';
 
 function openStart(){
   openModal(`${closeBtn()}<h2>창백한 청수리</h2>
   <p style="color:var(--dim);font-size:15px">량강도 백수군 청수리. 압록강 너머가 사라졌다. 평양은 그것을 "미제의 기상무기"라 부른다. 당신은 조사를 위해 파견된 국가보위성 소좌다. 그리고 당신의 이름이 지워지고 있다.</p>
   <h3>출신을 고르시오</h3>
-  <div class="arch">${ARCHETYPES.map((a,i)=>`<button onclick="newGame(ARCHETYPES[${i}])"><b>${a.name}</b>
+  <div class="arch">${ARCHETYPES.map((a,i)=>`<button data-act="new" data-arg="${i}"><b>${a.name}</b>
     <small>${a.desc}</small>
     <small>${Object.entries(a.attrs).map(([k,v])=>`<span style="color:${ATTRS[k].color}">${ATTRS[k].name} ${v}</span>`).join(' · ')}</small></button>`).join('')}</div>
   <p style="color:var(--dim);font-size:13px;margin-top:16px">판정: 2d6 + 기술 레벨 ≥ 난이도. 흰 판정은 기술이 오르면 재시도 가능, 붉은 판정은 단 한 번.</p>`);
@@ -1294,7 +1295,7 @@ function openSheet(){
   const rows = a => Object.entries(SKILLS).filter(([,s])=>s.attr===a).map(([k,s])=>{
     const b = G.bought[k]||0, tb = thoughtBonus(k), can = G.sp>0 && b < G.attrs[a];
     return `<div class="sk"><span>${esc(s.name)} <b>${level(k)}</b>${tb?` <small style="display:inline">(${tb>0?'+':''}${tb} 사상)</small>`:''}<small>${esc(s.desc)}</small></span>
-      ${can?`<button onclick="buy('${k}')">+</button>`:''}</div>`;
+      ${can?`<button data-act="buy" data-arg="${k}">+</button>`:''}</div>`;
   }).join('');
   openModal(`${closeBtn()}<h2>보위원 소좌 [이름 없음]</h2>
     <p style="color:var(--dim);font-size:14px">기술 점수: ${G.sp} · 각 기술은 속성 값만큼 추가로 올릴 수 있다.</p>
@@ -1309,7 +1310,7 @@ function openThoughts(){
   const bon = th => Object.entries(th.bonus).map(([k,v])=>`${SKILLS[k].name} ${v>0?'+':''}${v}`).join(', ');
   const card = (id, state) => { const th = THOUGHTS[id]; return `<div class="thought"><b>「${esc(th.name)}」</b><br>
     <small>${esc(state==='done'?th.a:th.q)}</small><br><small>효과: ${bon(th)} · 내면화 ${th.time}턴</small><br>
-    ${state==='known' && !t.active ? `<button class="close" style="float:none;margin-top:6px" onclick="internalize('${id}')">내면화한다</button>`:''}
+    ${state==='known' && !t.active ? `<button class="close" style="float:none;margin-top:6px" data-act="internalize" data-arg="${id}">내면화한다</button>`:''}
     ${state==='active' ? `<small style="color:var(--pale)">내면화 중… ${t.progress}/${th.time}</small>`:''}</div>`; };
   openModal(`${closeBtn()}<h2>사상함</h2>
     <p style="color:var(--dim);font-size:14px">생각을 품고 있으면 선택을 할 때마다 내면화가 진행된다. 한 번에 하나만.</p>
@@ -1338,7 +1339,16 @@ function loadGame(){
   render();
 }
 
-$('modal').addEventListener('click', e => { if (e.target.id==='modal' && G) closeModal(); });
+const ACTIONS = {
+  sheet:openSheet, thoughts:openThoughts, save:saveGame, load:loadGame, start:openStart, close:closeModal,
+  new:i => newGame(ARCHETYPES[+i]), buy, internalize,
+};
+// 인라인 onclick 대신 위임: 미리보기 뷰어의 CSP가 인라인 핸들러를 막아도 동작한다.
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (el){ ACTIONS[el.dataset.act](el.dataset.arg); return; }
+  if (e.target.id==='modal' && G) closeModal();
+});
 document.addEventListener('keydown', e => {
   if ($('modal').classList.contains('show')) { if (e.key==='Escape' && G) closeModal(); return; }
   const n = parseInt(e.key, 10);
