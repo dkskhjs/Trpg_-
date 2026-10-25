@@ -852,7 +852,7 @@ func _open_credits() -> void:
 		["기획 · 이야기 방향", "dkskhjs"],
 		["글 · 프로그람 · 음악 합성", "Claude (Anthropic)"],
 		["인물 · 배경 그림", "Gemini로 생성, 기획자 감수"],
-		["압록강 사진", "「North Korea and Yalu River」 (Wikimedia Commons) · CC BY 2.0\n흐림·어둡게 가공함 — creativecommons.org/licenses/by/2.0"],
+		["압록강 사진", "「North Korea and Yalu River」 — Tyler from Shanghai, China (Wikimedia Commons) · CC BY 2.0\n흐림·어둡게 가공함 — creativecommons.org/licenses/by/2.0"],
 		["음악 · 소리", "모두 합성음 — tools/make_audio.py, tools/make_music.py"],
 		["글꼴", "나눔명조 (SIL Open Font License 1.1)"],
 		["엔진", "Godot Engine (MIT 허가)"],
