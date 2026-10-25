@@ -11,6 +11,7 @@ var world: Dictionary
 var story: Dictionary
 var S: Dictionary = {}          # 저장되는 상태 전체
 var log_serial := 0             # 지금까지 추가된 로그 수 (UI 증분 렌더링용)
+var events: Array[String] = []  # 이번 행동에서 일어난 일 (소리·화면 효과용). UI가 비운다.
 var _expr_cache := {}
 
 
@@ -82,6 +83,11 @@ static func chance(lvl: int, dc: int) -> int:
 			elif not (a == 1 and b == 1) and a + b + lvl >= dc:
 				ok += 1
 	return roundi(ok / 36.0 * 100.0)
+
+
+## 0~1. 화면이 바래는 정도.
+func pale_intensity() -> float:
+	return clampf(float(S.pale) / 10.0, 0.0, 0.85)
 
 
 func pale_stage() -> String:
@@ -204,10 +210,14 @@ func apply(fx) -> void:
 		S.pale = maxi(0, int(S.pale) + int(fx.pale))
 		if int(fx.pale) < 0:
 			fx_note("창백이 조금 물러난다.")
+			events.append("pale_down")
+		else:
+			events.append("pale_up")
 	for nm in _as_list(fx.get("name")):
 		if not nm in S.names:
 			S.names.append(nm)
 			fx_note("이름을 기억했다: " + nm)
+			events.append("name")
 	if fx.has("day"):
 		S.day = int(fx.day)
 		S.day_tick = S.ticks
@@ -215,6 +225,7 @@ func apply(fx) -> void:
 	var th = fx.get("thought")
 	if th and not th in S.thoughts.known and not th in S.thoughts.done:
 		S.thoughts.known.append(th)
+		events.append("thought_new")
 		fx_note("새 사상: 「%s」 — 사상함에서 내면화할 수 있다." % world.THOUGHTS[th].name)
 
 
@@ -235,6 +246,7 @@ func tick() -> void:
 		t.done.append(t.active)
 		t.known.erase(t.active)
 		S.flags[th.flag] = true
+		events.append("thought_done")
 		push("voice", "[color=#dfe3e3][b]사상 내면화 완료: 「%s」[/b][/color] — %s" % [esc(th.name), esc(th.a)])
 		t.active = ""
 		t.progress = 0
@@ -323,6 +335,7 @@ func choose(st: Dictionary) -> void:
 		var lv := level(k)
 		var ok := (a == 6 and b == 6) or (not (a == 1 and b == 1) and a + b + lv >= dc)
 		S.checks[st.id] = {"ok": ok, "lvl": lv}
+		events.append("roll_ok" if ok else "roll_no")
 		var crit := " (결정적 성공)" if a == 6 and b == 6 else (" (결정적 실패)" if a == 1 and b == 1 else "")
 		push("roll", "[font_size=15][color=#8f877a]%s (%d+%d+%d = %d / %d) [color=%s][b]%s%s[/b][/color][/color][/font_size]" % [
 			skill_tag(k), a, b, lv, a + b + lv, dc, "#7fbf6a" if ok else "#b8322a", "성공" if ok else "실패", crit])

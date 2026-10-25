@@ -17,6 +17,18 @@ func _init() -> void:
 	main._open_sheet()
 	await _frames(5)
 	_snap(out + "/g_sheet.png")
+	main._close_modal()
+	# 창백 노출이 높을 때 강가 화면
+	main.game.S.pale = 3
+	main.game.go("square")
+	main._refresh()
+	await create_timer(2.5).timeout
+	_snap(out + "/g_pale_mid.png")
+	main.game.S.pale = 7
+	main.game.go("river")
+	main._refresh()
+	await create_timer(2.5).timeout
+	_snap(out + "/g_pale.png")
 	quit()
 
 

@@ -28,11 +28,16 @@ var modal: Control
 var modal_body: VBoxContainer
 var rendered_serial := 0
 var option_buttons: Array[Button] = []
+var audio: AudioDirector
+var pale_fx: ShaderMaterial
+var sound_btn: Button
 
 
 func _ready() -> void:
 	theme = _make_theme()
 	_build_layout()
+	audio = AudioDirector.new()
+	add_child(audio)
 	_open_start()
 
 
@@ -115,6 +120,7 @@ func _build_layout() -> void:
 	_side_button(side, "저장", _on_save)
 	_side_button(side, "불러오기", _on_load)
 	_side_button(side, "새 게임", _open_start)
+	sound_btn = _side_button(side, "소리: 켜짐", _toggle_sound)
 
 	# 오른쪽: 로그 + 선택지
 	var main_col := VBoxContainer.new()
@@ -157,6 +163,20 @@ func _build_layout() -> void:
 	opts_margin.add_child(opts_box)
 
 	_build_modal()
+	_build_pale_overlay()
+
+
+## 화면 맨 위에 덮는 창백 셰이더. 입력은 그대로 통과시킨다.
+func _build_pale_overlay() -> void:
+	var overlay := ColorRect.new()
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pale_fx = ShaderMaterial.new()
+	pale_fx.shader = preload("res://shaders/pale.gdshader")
+	for param in ["intensity", "edge", "pulse"]:
+		pale_fx.set_shader_parameter(param, 0.0)
+	overlay.material = pale_fx
+	add_child(overlay)
 
 
 func _dim_label(size: int) -> Label:
@@ -224,6 +244,32 @@ func _refresh() -> void:
 	_render_log()
 	_render_side()
 	_render_options()
+	_update_atmosphere()
+
+
+## 소리와 셰이더를 현재 상태에 맞춘다.
+func _update_atmosphere() -> void:
+	var scene: String = game.node().scene
+	var ending: bool = game.node().get("ending", false)
+	var pale := game.pale_intensity()
+	audio.update(scene, int(game.S.day), ending, pale)
+	audio.play_events(game.events)
+	_tween_param("intensity", clampf(pale + (0.5 if ending and "창백" in scene else 0.0), 0.0, 1.0), 2.0)
+	_tween_param("edge", AudioDirector.edge_for(scene), 2.0)
+	if "pale_up" in game.events:
+		pale_fx.set_shader_parameter("pulse", 1.0)
+		_tween_param("pulse", 0.0, 1.8)
+	game.events.clear()
+
+
+func _tween_param(param: String, to: float, secs: float) -> void:
+	var from: float = pale_fx.get_shader_parameter(param)
+	create_tween().tween_method(func(v): pale_fx.set_shader_parameter(param, v), from, to, secs)
+
+
+func _toggle_sound() -> void:
+	audio.set_muted(not audio.muted)
+	sound_btn.text = "소리: " + ("꺼짐" if audio.muted else "켜짐")
 
 
 func _render_log() -> void:
@@ -303,6 +349,7 @@ func _add_option_button(text: String, col: Color, cb: Callable) -> Button:
 
 
 func game_choose(st: Dictionary) -> void:
+	audio.click()
 	game.choose(st)
 	_refresh()
 	opts_scroll.scroll_vertical = 0
