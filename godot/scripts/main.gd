@@ -470,6 +470,12 @@ static func background_for(scene: String, day: int) -> String:
 		return "station"
 	if "광장" in scene or "군용 트럭" in scene or "박순녀의 집 앞" in scene:
 		return "square_pale" if day >= 3 else "square"
+	if "박순녀의 집" in scene:
+		return "park_home"
+	if "장마당" in scene:
+		return "market"
+	if "공동묘지" in scene:
+		return "graves"
 	return ""
 
 

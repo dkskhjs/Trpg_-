@@ -91,7 +91,7 @@ python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
 
 공통 구도: `wide establishing shot, no people in the foreground, eye level`
 
-완성: `inn` `inn_night` `square` `square_pale` `rally` `river` `river_beyond` `edge` `station` ✅ · 남은 것: `market` `park_home` `graves` `truck` `lockup` `finale` `dark` · 4일째 새 장소: `rail` `jeep_road` `bocheon` · 5일째 새 장소: `samjiyon` `monument` `pioneer_camp` `lab_tent` `bear_camp` `purge_post` `caravan_ice`
+완성: `inn` `inn_night` `square` `square_pale` `rally` `river` `river_beyond` `edge` `station` `market` `park_home` `graves` ✅ · 남은 것: `truck` `lockup` `finale` `dark` · 4일째 새 장소: `rail` `jeep_road` `bocheon` · 5일째 새 장소: `samjiyon` `monument` `pioneer_camp` `lab_tent` `bear_camp` `purge_post` `caravan_ice`
 
 원본을 받으면 `python3 tools/prepare_backgrounds.py <폴더>`로 가공합니다. 원본은 `art_src/backgrounds/`에 보관되고, 블러를 먹인 버전이 `godot/art/scenes/`에 들어갑니다(블러 강도: `--blur 6`).
 `scene` 열은 게임 속 장면 이름입니다(이 이름으로 배경을 매칭합니다).
