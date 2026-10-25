@@ -5,7 +5,7 @@
 // 색이 빠지고, 북쪽(화면 위)에서 하얀 안개가 내려오고, 필름 입자가 낀다.
 shader_type canvas_item;
 
-uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap;
+uniform sampler2D screen_texture : hint_screen_texture, filter_linear;
 uniform float intensity : hint_range(0.0, 1.0) = 0.0;
 uniform float edge : hint_range(0.0, 1.0) = 0.0;
 uniform float pulse : hint_range(0.0, 1.0) = 0.0;

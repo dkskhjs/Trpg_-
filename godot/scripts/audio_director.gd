@@ -12,7 +12,7 @@ const AMB_DB := {
 const PALE_MIN_DB := -40.0
 const PALE_MAX_DB := -9.0
 const SFX := {
-	"roll_ok": ["sfx_dice", "sfx_success"], "roll_no": ["sfx_dice", "sfx_fail"],
+	"roll_ok": ["sfx_success"], "roll_no": ["sfx_fail"],
 	"thought_new": ["sfx_thought"], "thought_done": ["sfx_thought"],
 	"pale_up": ["sfx_pale"], "pale_down": ["sfx_name"], "name": ["sfx_name"],
 }
@@ -108,7 +108,7 @@ func play_events(events: Array) -> void:
 	for e in events:
 		for name in SFX.get(e, []):
 			_play_sfx(name, delay)
-			delay += 0.45 if name == "sfx_dice" else 0.15
+			delay += 0.15
 
 
 func click() -> void:

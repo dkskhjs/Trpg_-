@@ -422,19 +422,6 @@ def track_pale():
 
 
 # ---------------------------------------------------------------- 효과음
-def sfx_dice():
-    """나무 탁자 위를 구르는 주사위: 둔탁하고 낮은 '톡, 톡'."""
-    out = np.zeros(int(0.8 * SR))
-    hits = [(0, 1), (0.1, .75), (0.18, .8), (0.3, .5), (0.37, .45), (0.47, .3), (0.54, .22)]
-    for k, (t, a) in enumerate(hits):
-        n = int(0.09 * SR)
-        tt = np.arange(n) / SR
-        body = np.sin(2 * np.pi * (380 + 60 * (k % 3)) * tt) * np.exp(-tt * 45)       # 나무 울림
-        knock = filt(rng.standard_normal(n), "bandpass", [250, 1400], 2) * np.exp(-tt * 70)
-        place(out, (body * 0.7 + knock) * a, t)
-    return reverb(filt(out, "lowpass", 2200), 0.5, 0.2)
-
-
 def low_tone(freq, dur, attack=0.02):
     """부드럽게 부푸는 낮은 금관풍 음. 고음 배음을 깎아 알림음처럼 들리지 않게 한다."""
     t = t_axis(dur)
@@ -509,7 +496,7 @@ if __name__ == "__main__":
     ]:
         save(name, render(name, fn), 0.8, 3)
     for name, fn in [
-        ("sfx_dice", sfx_dice), ("sfx_success", sfx_success), ("sfx_fail", sfx_fail), ("sfx_click", sfx_click),
+        ("sfx_success", sfx_success), ("sfx_fail", sfx_fail), ("sfx_click", sfx_click),
         ("sfx_thought", sfx_thought), ("sfx_pale", sfx_pale), ("sfx_name", sfx_name),
     ]:
         save(name, render(name, fn), 0.85, 5)

@@ -1,3 +1,4 @@
 node_modules/
 godot/.godot/
 godot/build/
+__pycache__/

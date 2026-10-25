@@ -49,7 +49,7 @@ npm run export
 | `amb_room` | 초대소: 벽 너머로 들리는 확성기 |
 | `amb_night`, `amb_wind` | 밤, 묘지, 장마당, 확성기마저 하얘진 3일째 광장 |
 | `amb_pale` | 창백 드론. 노출이 쌓이거나 강가에 가까워질수록 커집니다 |
-| `sfx_*` | 주사위, 성공·실패, 사상, 창백, 이름 |
+| `sfx_*` | 판정 성공·실패, 사상, 창백, 이름 |
 
 다시 생성하려면 `pip install numpy scipy`를 하고(ffmpeg 필요) `python3 tools/make_audio.py`를 실행하세요. 다른 소리로 바꾸려면 같은 이름의 `.ogg` 파일을 덮어쓰면 됩니다.
 
