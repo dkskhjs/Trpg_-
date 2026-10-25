@@ -44,7 +44,7 @@ rural North Korea 1990s–2000s, no text, no lettering, no watermark
 
 완성: `hero` `park` `myeongsu` `oh` `cat` ✅ · 남은 것: `choi` `elder`
 
-게임에서는 초상화를 **흑백 + 인물별 포인트 색 하나**로 바꿔 보여줍니다(`godot/shaders/portrait.gdshader`). 원본 색은 신경 쓰지 않아도 됩니다. 창백 노출이 쌓이면 포인트 색이 빠집니다. 색은 `godot/scripts/main.gd`의 `PORTRAITS`에서 정하고, `python3 tools/tone_preview.py`로 미리 볼 수 있습니다.
+게임에서는 초상화를 **흑백으로 바꾸고, 손·소품·얼굴 근처 몇 군데에만 물감을 떨어뜨린 것처럼 원래 색이 돌아오게** 보여줍니다(`godot/shaders/portrait.gdshader`). 창백 노출이 쌓이면 방울이 줄어듭니다. 방울 자리는 `godot/scripts/main.gd`의 `PORTRAITS`에서 정하고, `python3 tools/tone_preview.py`로 미리 볼 수 있습니다. 새 초상화를 넣으면 방울 자리를 잡아야 하니 알려주세요.
 
 | id | 인물 | 프롬프트 (스타일 블록 뒤에 붙임) |
 |---|---|---|

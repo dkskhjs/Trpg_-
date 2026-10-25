@@ -10,17 +10,18 @@ const C_OPT := Color("#d9c08a")
 const C_HP := Color("#d0625a")
 const C_MO := Color("#a68be0")
 const TYPE_CPS := 110.0   # 타자기 효과: 초당 글자 수
-## 대사하는 인물 → [초상화 파일(art/portraits/<id>.webp), 이름표, 포인트 색].
-## 초상화는 흑백에 포인트 색 하나만 입힌다. 주인공은 이름이 지워진 사람이라 색이 없다(null).
+## 대사하는 인물 → [초상화 파일(art/portraits/<id>.webp), 이름표, 물감 방울 자리].
+## 초상화는 흑백이고, 방울 자리(x, y, 반지름 — 그림 기준 0~1)에만 원래 색이 돌아온다.
+## 위치는 tools/tone_preview.py로 미리 본다(같은 공식).
 const PORTRAITS := {
-	"": ["hero", "보위원 소좌 [이름 없음]", null],
-	"박순녀": ["park", "박순녀 — 인민반장", "#b8302b"],        # 완장
-	"정명수": ["myeongsu", "정명수 — 하전사", "#6e7d3a"],      # 군복
-	"하전사": ["myeongsu", "정명수 — 하전사", "#6e7d3a"],
-	"오영희": ["oh", "오영희 — 기상관측원", "#c98a2e"],        # 담뱃불
-	"고양이": ["cat", "고양이 — 밀수꾼", "#2a9e9b"],           # 휴대폰 불빛
-	"최경철": ["choi", "최경철 — 검열국 중좌", "#2c3e78"],     # 차가운 권력
-	"노인": ["elder", "묘지기 노인", "#8a6a4a"],               # 흙
+	"": ["hero", "보위원 소좌 [이름 없음]", [Vector3(0.60, 0.42, 0.09), Vector3(0.86, 0.80, 0.09)]],
+	"박순녀": ["park", "박순녀 — 인민반장", [Vector3(0.94, 0.89, 0.12), Vector3(0.30, 0.50, 0.15), Vector3(0.56, 0.50, 0.08)]],
+	"정명수": ["myeongsu", "정명수 — 하전사", [Vector3(0.08, 0.34, 0.11), Vector3(0.56, 0.46, 0.10), Vector3(0.78, 0.70, 0.08)]],
+	"하전사": ["myeongsu", "정명수 — 하전사", [Vector3(0.08, 0.34, 0.11), Vector3(0.56, 0.46, 0.10), Vector3(0.78, 0.70, 0.08)]],
+	"오영희": ["oh", "오영희 — 기상관측원", [Vector3(0.80, 0.64, 0.16), Vector3(0.52, 0.49, 0.09), Vector3(0.88, 0.28, 0.07)]],
+	"고양이": ["cat", "고양이 — 밀수꾼", [Vector3(0.80, 0.86, 0.17), Vector3(0.52, 0.48, 0.10)]],
+	"최경철": ["choi", "최경철 — 검열국 중좌", []],
+	"노인": ["elder", "묘지기 노인", []],
 }
 
 var game := Game.new()
@@ -436,9 +437,11 @@ func _show_portrait(speaker: String) -> void:
 		return
 	portrait_id = entry[0]
 	portrait_caption.text = entry[1]
-	tone.set_shader_parameter("strength", 0.0 if entry[2] == null else 0.85)
-	if entry[2] != null:
-		tone.set_shader_parameter("accent", Color(entry[2]))
+	var spots: Array = entry[2]
+	var packed := PackedVector3Array(spots)
+	packed.resize(4)
+	tone.set_shader_parameter("spots", packed)
+	tone.set_shader_parameter("spot_count", spots.size())
 	portrait.texture = load(path)
 	portrait.modulate.a = 0.0
 	create_tween().tween_property(portrait, "modulate:a", 1.0, 0.6)
