@@ -37,11 +37,11 @@ void fragment() {
 
 	// 둘레의 빛: 주변 여덟 곳의 공백 정도
 	float glow = 0.0;
-	for (int i = 0; i < 8; i++) {
-		float a = float(i) * 0.785;
+	for (int i = 0; i < 4; i++) {
+		float a = float(i) * 1.5708 + 0.785;
 		glow += pale_mask(texture(TEXTURE, uv + vec2(cos(a), sin(a)) * vec2(0.03, 0.05)).rgb);
 	}
-	glow /= 8.0;
+	glow /= 4.0;
 
 	// 깜빡임: 작은 칸마다 다른 박자
 	vec2 cell = floor(uv * vec2(160.0, 90.0));

@@ -24,7 +24,7 @@ float noise(vec2 p) {
 float fbm(vec2 p) {
 	float v = 0.0;
 	float a = 0.5;
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 3; i++) {
 		v += a * noise(p);
 		p *= 2.03;
 		a *= 0.5;
@@ -38,7 +38,7 @@ void fragment() {
 
 	// 아지랑이처럼 느리게 일렁이는 화면
 	float t = TIME * 0.12;
-	uv += (vec2(fbm(uv * 3.0 + t), fbm(uv * 3.0 - t + 7.0)) - 0.5) * 0.007 * k;
+	uv += (vec2(noise(uv * 3.0 + t), noise(uv * 3.0 - t + 7.0)) - 0.5) * 0.007 * k;
 	vec3 col = texture(screen_texture, uv).rgb;
 
 	// 색이 빠진다

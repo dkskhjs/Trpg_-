@@ -74,6 +74,11 @@ const VISTAS := {"river_beyond": 0.66}
 const VISTA_REVEAL := 2.2
 var typing_delay := 0.0   # 다음 타자 효과를 시작하기 전 기다릴 시간
 var typing: Tween
+var pale_overlay: ColorRect
+var shown_entries := 0   # 로그 창에 지금 그려진 항목 수
+const LOG_VIEW_KEEP := 150   # 로그 창에는 최근 항목만 남긴다(저장 기록은 그대로)
+var slow_checks := 0   # 초당 프레임이 낮게 나온 연속 횟수
+var fps_timer := 0.0
 var settings := Settings.load_or_default()
 var title: TitleScreen
 var instant_log := false
@@ -226,7 +231,8 @@ func _build_layout() -> void:
 	log_view.scroll_following = true
 	log_view.selection_enabled = true
 	log_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	log_view.visible_characters_behavior = TextServer.VC_CHARS_BEFORE_SHAPING
+	# 모양을 한 번만 잡고 보이는 글자 수만 바꾼다. 매 프레임 전체를 다시 배치하지 않아 긴 로그에서도 가볍다.
+	log_view.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 	log_view.gui_input.connect(_skip_on_click)
 	log_margin.add_child(log_view)
 
@@ -273,6 +279,36 @@ func _build_pale_overlay() -> void:
 		pale_fx.set_shader_parameter(param, 0.0)
 	overlay.material = pale_fx
 	add_child(overlay)
+	pale_overlay = overlay
+	overlay.hide()
+
+
+## 플레이 중 2초마다 초당 프레임을 보고, 세 번 연속 25 아래면 한 번만 가벼운 화면으로 바꾼다.
+func _process(delta: float) -> void:
+	if settings.lite or settings.lite_auto_done or not game.has_game() or title.visible:
+		return
+	fps_timer += delta
+	if fps_timer < 2.0:
+		return
+	fps_timer = 0.0
+	slow_checks = slow_checks + 1 if Engine.get_frames_per_second() < 25 else 0
+	if slow_checks >= 3:
+		settings.lite = true
+		settings.lite_auto_done = true
+		settings.save()
+		_update_overlay_visibility()
+		for b in backgrounds:
+			b.material = null
+		game.sys("— 화면이 느려 가벼운 화면으로 바꿨습니다. 설정에서 되돌릴 수 있습니다 —")
+		_render_log()
+
+
+## 창백 효과가 거의 없거나 가벼운 화면이면 화면 전체 셰이더를 끈다(화면 복사 비용이 크다).
+func _update_overlay_visibility() -> void:
+	var sum := 0.0
+	for param in ["intensity", "edge", "pulse"]:
+		sum += float(pale_fx.get_shader_parameter(param))
+	pale_overlay.visible = sum > 0.01 and not settings.lite
 
 
 func _dim_label(size: int) -> Label:
@@ -365,7 +401,9 @@ func _update_atmosphere() -> void:
 
 func _tween_param(param: String, to: float, secs: float) -> void:
 	var from: float = pale_fx.get_shader_parameter(param)
-	create_tween().tween_method(func(v): pale_fx.set_shader_parameter(param, v), from, to, secs)
+	create_tween().tween_method(func(v):
+		pale_fx.set_shader_parameter(param, v)
+		_update_overlay_visibility(), from, to, secs)
 
 
 
@@ -374,12 +412,18 @@ func _tween_param(param: String, to: float, secs: float) -> void:
 func _render_log() -> void:
 	var entries: Array = game.S.log
 	var fresh := game.log_serial - rendered_serial
-	if rendered_serial == 0 or fresh > entries.size():
+	if rendered_serial == 0 or fresh > entries.size() or shown_entries + fresh > LOG_VIEW_KEEP + 50:
+		# 처음부터 다시 그린다: 새 항목 앞에 최근 LOG_VIEW_KEEP개만
+		fresh = mini(fresh, entries.size())
 		log_view.clear()
-		fresh = entries.size()
+		var start := maxi(0, entries.size() - fresh - LOG_VIEW_KEEP)
+		for i in range(start, entries.size() - fresh):
+			log_view.append_text(entries[i][1] + "\n\n")
+		shown_entries = entries.size() - fresh - start
 	var before := log_view.get_total_character_count()
 	for i in range(entries.size() - fresh, entries.size()):
 		log_view.append_text(entries[i][1] + "\n\n")
+	shown_entries += fresh
 	rendered_serial = game.log_serial
 	var after := log_view.get_total_character_count()
 	if typing:
@@ -489,7 +533,7 @@ func _show_background(id: String) -> void:
 	var nxt := backgrounds[bg_active]
 	var tw := create_tween().set_parallel()
 	tw.tween_property(old, "modulate:a", 0.0, 1.2)
-	nxt.material = vista_fx if VISTAS.has(id) else null
+	nxt.material = vista_fx if VISTAS.has(id) and not settings.lite else null
 	if VISTAS.has(id):
 		# 막을 걷어 풍경을 보여주고, 잠시 뒤 다시 내린다. 글은 그동안 기다린다.
 		var reveal := create_tween()
@@ -759,6 +803,21 @@ func _open_settings() -> void:
 		settings.pale_strength = v
 		if game.has_game():
 			_update_atmosphere())
+	var lite := CheckButton.new()
+	lite.text = "가벼운 화면 (저사양·웹에서 느릴 때)"
+	lite.button_pressed = settings.lite
+	lite.add_theme_font_override("font", font_bold)
+	lite.add_theme_color_override("font_color", C_HEAD)
+	lite.toggled.connect(func(on):
+		settings.lite = on
+		settings.save()
+		_update_overlay_visibility()
+		for b in backgrounds:
+			if b.material != null and on:
+				b.material = null
+		if not on and VISTAS.has(bg_id):
+			backgrounds[bg_active].material = vista_fx)
+	modal_body.add_child(lite)
 	var mute := CheckButton.new()
 	mute.text = "소리 끄기"
 	mute.button_pressed = settings.muted
