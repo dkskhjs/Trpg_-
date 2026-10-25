@@ -16,7 +16,7 @@ const worldSrc = scripts.find(s => s.includes('const ATTRS'));
 const storySrc = scripts.find(s => s.includes('const STORY'));
 
 const ctx = vm.createContext({});
-const data = vm.runInContext(`${worldSrc}\n${storySrc}\n({ATTRS, SKILLS, ARCHETYPES, THOUGHTS, DIFF, STORY})`, ctx);
+const data = vm.runInContext(`${worldSrc}\n${storySrc}\n({ATTRS, SKILLS, ARCHETYPES, THOUGHTS, ITEMS, DIFF, STORY})`, ctx);
 
 function parseFn(fn){
   const src = '(' + fn.toString() + ')';
@@ -29,6 +29,7 @@ function condExpr(src, node){
   s = s.replace(/G\.flags\.(\w+)/g, 'flag("$1")')
        .replace(/G\.visited\.(\w+)/g, 'visited("$1")')
        .replace(/G\.names\.length/g, 'names_count()')
+       .replace(/G\.ws\b/g, 'ws()')
        .replace(/G\.names\.includes\('([^']*)'\)/g, 'has_name("$1")')
        .replace(/\|\|/g, ' or ')
        .replace(/&&/g, ' and ')
@@ -105,7 +106,7 @@ for (const [id, n] of Object.entries(data.STORY)){
   story[id] = out;
 }
 
-const world = {ATTRS: data.ATTRS, SKILLS: data.SKILLS, ARCHETYPES: data.ARCHETYPES, THOUGHTS: data.THOUGHTS, DIFF: data.DIFF};
+const world = {ATTRS: data.ATTRS, SKILLS: data.SKILLS, ARCHETYPES: data.ARCHETYPES, THOUGHTS: data.THOUGHTS, ITEMS: data.ITEMS, DIFF: data.DIFF};
 const outDir = path.join(root, 'godot', 'data');
 fs.mkdirSync(outDir, {recursive: true});
 fs.writeFileSync(path.join(outDir, 'story.json'), JSON.stringify(story, null, 1));

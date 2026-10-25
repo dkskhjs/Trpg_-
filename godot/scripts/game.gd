@@ -32,7 +32,7 @@ func new_game(arch_index: int) -> void:
 	S = {
 		"arch": arch.id, "attrs": arch.attrs.duplicate(), "bought": {}, "sp": 2,
 		"hp": 0, "morale": 0, "node": "", "flags": {}, "visited": {}, "checks": {}, "used": {},
-		"pale": 0, "ticks": 0, "day": 1, "day_tick": 0, "names": [],
+		"pale": 0, "ticks": 0, "day": 1, "day_tick": 0, "names": [], "ws": 0,
 		"thoughts": {"known": [], "active": "", "progress": 0, "done": []}, "log": [],
 	}
 	S.hp = max_hp()
@@ -119,6 +119,11 @@ func names_count() -> int:
 
 func has_name(n: String) -> bool:
 	return n in S.names
+
+
+## 청수리의 창백 점수. 3일째 밤에 물러남(≥3)과 확장(<3)을 가른다.
+func ws() -> int:
+	return int(S.get("ws", 0))
 
 
 func eval_cond(src: String) -> bool:
@@ -224,6 +229,14 @@ func apply(fx) -> void:
 			S.names.append(nm)
 			fx_note("이름을 기억했다: " + nm)
 			events.append("name")
+	if fx.has("ws"):
+		S.ws = ws() + int(fx.ws)
+	for k in _as_list(fx.get("item")):
+		if not flag("item_" + k):
+			S.flags["item_" + k] = true
+			fx_note("소지품: " + world.ITEMS[k].name)
+	for k in _as_list(fx.get("unitem")):
+		S.flags.erase("item_" + k)
 	if fx.has("day"):
 		S.day = int(fx.day)
 		S.day_tick = S.ticks
@@ -297,6 +310,29 @@ func go(id: String) -> void:
 			go("dead_hp")
 		elif int(S.morale) <= 0:
 			go("dead_morale")
+
+
+## 인물 화면의 추가 칸: [[제목, [줄...]]]  소지품 · 동행 · 창백 상황
+func sheet_extras() -> Array:
+	var out := []
+	var items := []
+	for k in world.ITEMS:
+		if flag("item_" + k):
+			items.append("%s\n%s" % [world.ITEMS[k].name, world.ITEMS[k].desc])
+	if items.size() > 0:
+		out.append(["소지품", items])
+	var comp := []
+	if flag("choi_with"):
+		comp.append("최경철 — 검열국 중좌")
+	if flag("met_mun") and flag("pale_receded"):
+		comp.append("문봉식 — 협궤 운전수")
+	if flag("met_yoon") and flag("pale_expanded"):
+		comp.append("윤해란 — 중앙당 지도원")
+	if comp.size() > 0:
+		out.append(["동행", comp])
+	if flag("report_done"):
+		out.append(["창백 상황", ["청수리: " + ("물러남" if ws() >= 3 else "확장")]])
+	return out
 
 
 ## 화면에 보일 선택지: [{opt, id, locked, lv}]

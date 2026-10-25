@@ -42,7 +42,7 @@ rural North Korea 1990s–2000s, no text, no lettering, no watermark
 
 공통 구도: `bust portrait, three-quarter view, face lit from one side`
 
-완성: `hero` `park` `myeongsu` `oh` `cat` ✅ · 남은 것: `choi` `elder`
+완성: `hero` `park` `myeongsu` `oh` `cat` ✅ · 남은 것: `choi` `elder` · 4일째 이후: `mun` `yoon` `cheol` `kimsh`
 
 게임에서는 초상화를 **흑백으로 바꾸고, 손·소품·얼굴 근처 몇 군데에만 물감을 떨어뜨린 것처럼 원래 색이 돌아오게** 보여줍니다(`godot/shaders/portrait.gdshader`). 창백 노출이 쌓이면 방울이 줄어듭니다. 방울 자리는 `godot/scripts/main.gd`의 `PORTRAITS`에서 정하고, `python3 tools/tone_preview.py`로 미리 볼 수 있습니다. 새 초상화를 넣으면 방울 자리를 잡아야 하니 알려주세요.
 
@@ -56,11 +56,20 @@ rural North Korea 1990s–2000s, no text, no lettering, no watermark
 | `choi` | 최경철. 검열국 중좌, 50대 | `an imposing Korean lieutenant colonel in his 50s, long dark leather-trimmed greatcoat, red shoulder boards, cold authoritative face cracking with fear, one hand bare and completely white up to the wrist` |
 | `elder` | 묘지기 노인. 70대 | `a bent old Korean man in his 70s, grave keeper, weathered deep-lined face, holding a sickle, patched cotton clothes, calm eyes that remember too much` |
 
+### 4일째 이후 새 인물 (스타일 블록 뒤에 붙임)
+
+| id | 인물 | 프롬프트 | 물감 방울 후보 |
+|---|---|---|---|
+| `mun` | 문봉식. 협궤 운전수, 50대. 1997년에서 늙지 않고 돌아옴 | `a weathered Korean railway engine driver in his 50s, outdated 1990s railway uniform with brass buttons and cap, holding a crumpled ration coupon, confused gentle eyes, white dust on his boots and shoulders` | 배급표, 제복 단추 |
+| `yoon` | 윤해란. 중앙당 지도원, 30대 | `a sharp Korean woman in her mid 30s, central party official, black padded coat, small red badge on her chest, hair tied tightly, cold precise gaze, one coat button completely blank white` | 붉은 배지, 하얀 단추 |
+| `cheol` | 리철(철이). 소년단원, 12세 | `a 12-year-old Korean schoolboy, red neckerchief of the children's union, school uniform, holding a worn class roll book, tired brave eyes, frost on his cap` | 붉은 넥타이, 출석부 |
+| `kimsh` | 김선희. 혁명전적지 해설강사, 40대 | `a Korean woman in her 40s, revolutionary site tour guide, traditional-style uniform dress, pointer stick in hand, mouth mid-sentence, parts of her face and pointer fading into blank cream paper` | 지시봉 끝, 입술 |
+
 ## 4. 장소 배경
 
 공통 구도: `wide establishing shot, no people in the foreground, eye level`
 
-완성: `inn` `inn_night` `square` `square_pale` `rally` `river` `edge` `station` ✅ · 남은 것: `market` `park_home` `graves` `truck` `lockup` `finale` `dark`
+완성: `inn` `inn_night` `square` `square_pale` `rally` `river` `edge` `station` ✅ · 남은 것: `market` `park_home` `graves` `truck` `lockup` `finale` `dark` · 4일째 새 장소: `rail` `jeep_road` `bocheon`
 
 원본을 받으면 `python3 tools/prepare_backgrounds.py <폴더>`로 가공합니다. 원본은 `art_src/backgrounds/`에 보관되고, 블러를 먹인 버전이 `godot/art/scenes/`에 들어갑니다(블러 강도: `--blur 6`).
 `scene` 열은 게임 속 장면 이름입니다(이 이름으로 배경을 매칭합니다).
@@ -81,9 +90,26 @@ rural North Korea 1990s–2000s, no text, no lettering, no watermark
 | `truck` | 군용 트럭 | `an old olive military truck parked in the village square, canvas cover, mud-splattered, a figure in a greatcoat smoking beside it` |
 | `lockup` | 초대소 구류실 | `a converted storage shed used as a holding cell, heavy rusted padlock that still has colour, thin light through plank gaps` |
 | `finale` | 밤의 압록강 | `night at the border, an empty guard post table with a pencil and a blank report form, the white void now glowing faintly and lighting everything from the north` |
+| `rail` | 협궤 철길 (4일째, 물러남) | `a rusted narrow-gauge railway along a frozen river, a small hand-pushed rail cart, patches of blank white haze left beside the tracks, faint factory lights of a Chinese city across the river` |
+| `jeep_road` | 하얀 길 (4일째, 확장) | `a military jeep with a loudspeaker on its roof driving on a road that is solid blank white, only a few meters of grey road appear in front of its wheels, mountains fading into white` |
+| `bocheon` | 보천 갈림길 (4일째 밤) | `a tiny abandoned mountain railway station at night, collapsed roof, wall clock stopped, small coal stove glowing, the northern sky beyond the window a tall silent white` |
 | `dark` | 어둠 | `almost total darkness, the faint outline of a loudspeaker horn, a single sliver of white light` |
 
-## 5. 결말 일러스트 (선택)
+### 5일째 이후 예정 장소
+삼지연 읍과 기념비 광장, 혁명전적지 해설관, 백두산 기슭 숲길, 밀영. 세력이 확정되면 연구소 천막, 곰 사냥꾼 야영지 등을 추가합니다.
+
+## 5. 소지품 그림 (선택)
+아이템 아이콘으로 쓸 수 있는 작은 그림입니다. 정사각형 512×512, 크림색 종이 바탕에 물건 하나만 그립니다.
+
+| id | 물건 | 프롬프트 |
+|---|---|---|
+| `item_radio` | 휴대용 단파 라디오 | `a worn 1980s portable shortwave radio with a telescopic antenna and hand-modified dial, single object on cream paper` |
+| `item_notel` | 노텔(휴대용 DVD 플레이어) | `a cheap Chinese portable DVD player with a small flip screen, scratched, single object on cream paper` |
+| `item_dvd` | 「혁명가요 모음」 알판 | `a DVD in a plain paper sleeve with handwritten label, single object on cream paper, label illegible` |
+| `item_phone` | 중국 손전화 | `an old cracked smartphone with a glowing screen, single object on cream paper` |
+| `item_ledger` | 인민반 명단 | `a thin worn notebook with handwritten columns of names, some rewritten in fresh ink, single object on cream paper, writing illegible` |
+
+## 6. 결말 일러스트 (선택)
 
 | id | 결말 | 핵심 이미지 |
 |---|---|---|
@@ -94,7 +120,7 @@ rural North Korea 1990s–2000s, no text, no lettering, no watermark
 | `end_names` | 명부 | 숯으로 쓴 이름이 벽과 바닥을 덮은 초소 |
 | `end_wake` | 이름을 쓰는 자 | 볼펜 홈을 따라 이름을 다시 쓰는 손 |
 
-## 6. 작업 순서 제안
+## 7. 작업 순서 제안
 1. `hero`로 화풍을 먼저 확정합니다. 이 그림이 이후 모든 그림의 기준이 됩니다.
 2. 나머지 인물 6명을 같은 화풍으로 만듭니다.
 3. 배경은 1일째 장소부터 만듭니다: `inn` → `square` → `river` → `station` → `market`.

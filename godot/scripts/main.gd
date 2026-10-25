@@ -22,6 +22,9 @@ const PORTRAITS := {
 	"고양이": ["cat", "고양이 — 밀수꾼", [Vector3(0.80, 0.86, 0.17), Vector3(0.52, 0.48, 0.10)]],
 	"최경철": ["choi", "최경철 — 검열국 중좌", []],
 	"노인": ["elder", "묘지기 노인", []],
+	"철도원": ["mun", "문봉식 — 협궤 운전수", []],
+	"문봉식": ["mun", "문봉식 — 협궤 운전수", []],
+	"윤해란": ["yoon", "윤해란 — 중앙당 지도원", []],
 }
 
 var game := Game.new()
@@ -391,9 +394,18 @@ func _render_side() -> void:
 
 
 ## 장면 이름 → 배경(art/scenes/<id>.webp). 그림이 없는 장소는 빈 문자열(어두운 바탕).
+## "keep"이면 지금 배경을 유지한다(동행 대화처럼 장소가 바뀌지 않는 장면).
 static func background_for(scene: String, day: int) -> String:
+	if "동행" in scene:
+		return "keep"
 	if "구류실" in scene or "결말" in scene or "어둠" in scene:
 		return ""
+	if "협궤 철길" in scene:
+		return "rail"
+	if "하얀 길" in scene:
+		return "jeep_road"
+	if "보천" in scene:
+		return "bocheon"
 	if "초대소" in scene:
 		return "inn_night" if "밤" in scene else "inn"
 	if "궐기대회" in scene:
@@ -410,7 +422,7 @@ static func background_for(scene: String, day: int) -> String:
 
 
 func _show_background(id: String) -> void:
-	if id == bg_id:
+	if id == bg_id or id == "keep":
 		return
 	bg_id = id
 	var path := "res://art/scenes/%s.webp" % id
@@ -599,6 +611,10 @@ func _open_sheet() -> void:
 	_modal_text("기술 점수: %d · 각 기술은 속성 값만큼 추가로 올릴 수 있다." % int(game.S.sp))
 	if game.S.names.size() > 0:
 		_modal_text("수첩 — 기억한 이름: " + " · ".join(game.S.names), C_INK, 15)
+	for section in game.sheet_extras():
+		_modal_text(section[0], C_INK, 19)
+		for line in section[1]:
+			_modal_text(line, C_DIM, 14)
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 24)
