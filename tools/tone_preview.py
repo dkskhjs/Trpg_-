@@ -3,7 +3,7 @@
 그림 전체를 흑백으로 바꾸고, SPOTS에 적은 자리(손·소품·얼굴 근처)에만
 물감을 떨어뜨린 것처럼 원래 색이 돌아온다. 창백 노출이 쌓이면 방울이 줄어든다.
 
-    python3 tools/tone_preview.py [출력.jpg]
+    python3 tools/tone_preview.py [출력.jpg] [id ...]
 위치를 바꾸려면 SPOTS와 godot/scripts/main.gd의 PORTRAITS를 함께 고친다.
 좌표는 그림 기준 0~1 (x: 왼→오, y: 위→아래), r은 그림 너비 대비 반지름.
 """
@@ -23,6 +23,11 @@ SPOTS = {
     "myeongsu": [(0.08, 0.34, 0.11), (0.56, 0.46, 0.10), (0.78, 0.70, 0.08)],
     "oh": [(0.80, 0.64, 0.16), (0.52, 0.49, 0.09), (0.88, 0.28, 0.07)],
     "cat": [(0.80, 0.86, 0.17), (0.52, 0.48, 0.10)],
+    "mun": [(0.68, 0.53, 0.13), (0.50, 0.31, 0.09), (0.62, 0.11, 0.06)],
+    "yoon": [(0.76, 0.65, 0.07), (0.50, 0.27, 0.11), (0.65, 0.73, 0.06)],
+    "cheol": [(0.42, 0.51, 0.15), (0.72, 0.68, 0.12), (0.50, 0.28, 0.08)],
+    "kimsh": [(0.88, 0.36, 0.07), (0.54, 0.30, 0.07), (0.52, 0.48, 0.11), (0.40, 0.80, 0.10)],
+    "leader_portrait": [(0.18, 0.20, 0.14), (0.86, 0.24, 0.12), (0.20, 0.80, 0.12), (0.84, 0.82, 0.14)],
 }
 PAPER = np.array([0.93, 0.91, 0.86])
 INK = np.array([0.10, 0.09, 0.08])
@@ -79,12 +84,15 @@ def main():
     out = sys.argv[1] if len(sys.argv) > 1 else "tone_sheet.jpg"
     W, H = 300, 402
     tiles = []
+    only = sys.argv[2:]
     for k, spots in SPOTS.items():
+        if only and k not in only:
+            continue
         im = Image.open(os.path.join(P, k + ".webp")).convert("RGB").resize((W, H))
         tiles.append(im)
         for pale in (0.0, 0.6):
             tiles.append(Image.fromarray((np.clip(tone(im, spots, pale), 0, 1) * 255).astype(np.uint8)))
-    sheet = Image.new("RGB", (W * 3, H * len(SPOTS)), "black")
+    sheet = Image.new("RGB", (W * 3, H * (len(tiles) // 3)), "black")
     for i, t in enumerate(tiles):
         sheet.paste(t, ((i % 3) * W, (i // 3) * H))
     sheet.save(out, quality=85)

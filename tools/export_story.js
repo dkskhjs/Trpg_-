@@ -32,6 +32,8 @@ function condExpr(src, node){
        .replace(/G\.ws\b/g, 'ws()')
        .replace(/G\.rep\.(\w+)/g, 'rep("$1")')
        .replace(/G\.names\.includes\('([^']*)'\)/g, 'has_name("$1")')
+       .replace(/!==/g, ' != ')
+       .replace(/===/g, ' == ')
        .replace(/\|\|/g, ' or ')
        .replace(/&&/g, ' and ')
        .replace(/!(?!=)/g, 'not ');

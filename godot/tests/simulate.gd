@@ -34,7 +34,8 @@ func _init() -> void:
 	print("결말 분포: ", ends)
 	print("방문하지 못한 노드: ", unseen)
 	print("막힌 노드: ", stuck)
-	quit(1 if stuck.size() > 0 else 0)
+	print("조건식 오류: ", _shared.errors)
+	quit(1 if stuck.size() > 0 or _shared.errors.size() > 0 else 0)
 
 
 var _shared: Game

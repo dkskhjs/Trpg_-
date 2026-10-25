@@ -62,7 +62,9 @@ python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
 
 공통 구도: `bust portrait, three-quarter view, face lit from one side`
 
-완성: `hero` `park` `myeongsu` `oh` `cat` ✅ · 남은 것: `choi` `elder` · 4일째 이후: `mun` `yoon` `cheol` `kimsh`
+완성: `hero` `park` `myeongsu` `oh` `cat` `mun` `yoon` `cheol` `kimsh` ✅ · 남은 것: `choi` `elder` · 5일째 세력 인물: `do` `kwak` `seo` `heo` `kang` `baek`
+
+사물 초상화: `leader_portrait`(금테 액자 안이 하얗게 빈 수령님 초상화) ✅. 초대소에서 초상화를 살피는 장면에서 인물 초상화 대신 뜹니다(`main.gd`의 `NODE_PORTRAITS`).
 
 게임에서는 초상화를 **흑백으로 바꾸고, 손·소품·얼굴 근처 몇 군데에만 물감을 떨어뜨린 것처럼 원래 색이 돌아오게** 보여줍니다(`godot/shaders/portrait.gdshader`). 창백 노출이 쌓이면 방울이 줄어듭니다. 방울 자리는 `godot/scripts/main.gd`의 `PORTRAITS`에서 정하고, `python3 tools/tone_preview.py`로 미리 볼 수 있습니다. 새 초상화를 넣으면 방울 자리를 잡아야 하니 알려주세요.
 

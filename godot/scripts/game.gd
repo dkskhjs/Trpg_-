@@ -13,6 +13,7 @@ var S: Dictionary = {}          # 저장되는 상태 전체
 var log_serial := 0             # 지금까지 추가된 로그 수 (UI 증분 렌더링용)
 var events: Array[String] = []  # 이번 행동에서 일어난 일 (소리·화면 효과용). UI가 비운다.
 var _expr_cache := {}
+var errors: Array[String] = []   # 해석하지 못한 조건식 (테스트가 확인한다)
 
 
 func _init() -> void:
@@ -151,12 +152,21 @@ func eval_cond(src: String) -> bool:
 	var e: Expression = _expr_cache.get(src)
 	if e == null:
 		e = Expression.new()
-		var err := e.parse(src)
-		assert(err == OK, "조건식 파싱 실패: %s (%s)" % [src, e.get_error_text()])
+		if e.parse(src) != OK:
+			_cond_error("조건식 파싱 실패: %s (%s)" % [src, e.get_error_text()])
+			return false
 		_expr_cache[src] = e
 	var r = e.execute([], self, true)
-	assert(not e.has_execute_failed(), "조건식 실행 실패: " + src)
+	if e.has_execute_failed():
+		_cond_error("조건식 실행 실패: " + src)
+		return false
 	return bool(r)
+
+
+func _cond_error(msg: String) -> void:
+	if not msg in errors:
+		errors.append(msg)
+		push_error(msg)
 
 
 func resolve_line(entry) -> String:

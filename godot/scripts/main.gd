@@ -22,11 +22,11 @@ const PORTRAITS := {
 	"고양이": ["cat", "고양이 — 밀수꾼", [Vector3(0.80, 0.86, 0.17), Vector3(0.52, 0.48, 0.10)]],
 	"최경철": ["choi", "최경철 — 검열국 중좌", []],
 	"노인": ["elder", "묘지기 노인", []],
-	"철도원": ["mun", "문봉식 — 협궤 운전수", []],
-	"문봉식": ["mun", "문봉식 — 협궤 운전수", []],
-	"윤해란": ["yoon", "윤해란 — 중앙당 지도원", []],
-	"리철": ["cheol", "리철 — 소년단원", []],
-	"김선희": ["kimsh", "김선희 — 혁명전적지 해설강사", []],
+	"철도원": ["mun", "문봉식 — 협궤 운전수", [Vector3(0.68, 0.53, 0.13), Vector3(0.50, 0.31, 0.09), Vector3(0.62, 0.11, 0.06)]],
+	"문봉식": ["mun", "문봉식 — 협궤 운전수", [Vector3(0.68, 0.53, 0.13), Vector3(0.50, 0.31, 0.09), Vector3(0.62, 0.11, 0.06)]],
+	"윤해란": ["yoon", "윤해란 — 중앙당 지도원", [Vector3(0.76, 0.65, 0.07), Vector3(0.50, 0.27, 0.11), Vector3(0.65, 0.73, 0.06)]],
+	"리철": ["cheol", "리철 — 소년단원", [Vector3(0.42, 0.51, 0.15), Vector3(0.72, 0.68, 0.12), Vector3(0.50, 0.28, 0.08)]],
+	"김선희": ["kimsh", "김선희 — 혁명전적지 해설강사", [Vector3(0.88, 0.36, 0.07), Vector3(0.54, 0.30, 0.07), Vector3(0.52, 0.48, 0.11), Vector3(0.40, 0.80, 0.10)]],
 	"허명진": ["heo", "허명진 — 창백 연구소 연구사", []],
 	"도학수": ["do", "도학수 — 곰쫓사 조사단장", []],
 	"곽만석": ["kwak", "곽만석 — 백두산 포수", []],
@@ -34,6 +34,11 @@ const PORTRAITS := {
 	"강동혁": ["kang", "강동혁 — 정리반장", []],
 	"백순자": ["baek", "백순자 — 흰 길 상단", []],
 }
+## 사람 대신 사물을 보여주는 장면: 노드 id → PORTRAITS와 같은 형식. 화자보다 먼저 적용한다.
+const NODE_PORTRAITS := {
+	"portrait": ["leader_portrait", "벽의 초상화 — 얼굴이 없다", [Vector3(0.18, 0.20, 0.14), Vector3(0.86, 0.24, 0.12), Vector3(0.20, 0.80, 0.12), Vector3(0.84, 0.82, 0.14)]],
+}
+const NODE_PORTRAIT_ALIASES := {"portrait_ignore": "portrait", "portrait_panic": "portrait", "portrait_wipe": "portrait"}
 
 var game := Game.new()
 var font_regular: Font = preload("res://fonts/NanumMyeongjo-Regular.ttf")
@@ -408,7 +413,7 @@ func _render_side() -> void:
 	sheet_btn.text = "인물 · 기술" + (" (+%d)" % sp if sp > 0 else "")
 	var t: Dictionary = game.S.thoughts
 	thought_btn.text = "사상함" + (" (내면화 중)" if t.active != "" else (" (%d)" % t.known.size() if t.known.size() > 0 else ""))
-	_show_portrait(game.S.get("speaker", ""))
+	_show_portrait(game.S.get("speaker", ""), game.S.node)
 	_show_background(background_for(game.node().scene, int(game.S.day)))
 
 
@@ -470,8 +475,9 @@ func _show_background(id: String) -> void:
 
 
 ## 이 장면에서 마지막으로 말한 인물의 초상화. 확성기·라디오처럼 초상화가 없는 목소리면 주인공.
-func _show_portrait(speaker: String) -> void:
-	var entry: Array = PORTRAITS.get(speaker, PORTRAITS[""])
+func _show_portrait(speaker: String, node_id: String = "") -> void:
+	var key: String = NODE_PORTRAIT_ALIASES.get(node_id, node_id)
+	var entry: Array = NODE_PORTRAITS[key] if NODE_PORTRAITS.has(key) else PORTRAITS.get(speaker, PORTRAITS[""])
 	var path := "res://art/portraits/%s.webp" % entry[0]
 	if not ResourceLoader.exists(path):
 		entry = PORTRAITS[""]
