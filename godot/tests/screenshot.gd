@@ -20,9 +20,13 @@ func _init() -> void:
 	main.game_choose(main.game.visible_options()[0])
 	await create_timer(0.6).timeout
 	await _snap(out + "/g_typing.png", false)
+	main.game.apply({"item": ["potato", "claw", "radio"], "rep": {"bear": 2, "pioneers": 1}, "thought": "reaction"})
 	main._open_sheet()
 	await _frames(5)
 	await _snap(out + "/g_sheet.png")
+	main._open_thoughts()
+	await _frames(5)
+	await _snap(out + "/g_thoughts.png")
 	main._open_settings()
 	await _frames(5)
 	await _snap(out + "/g_settings.png")

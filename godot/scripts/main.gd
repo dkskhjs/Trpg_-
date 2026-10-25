@@ -9,6 +9,7 @@ const C_DIM := Color("#8f877a")
 const C_OPT := Color("#d9c08a")
 const C_HP := Color("#d0625a")
 const C_MO := Color("#a68be0")
+const C_HEAD := Color("#e8c890")   # 제목·항목 이름: 굵게, 금빛
 ## 대사하는 인물 → [초상화 파일(art/portraits/<id>.webp), 이름표, 물감 방울 자리].
 ## 초상화는 흑백이고, 방울 자리(x, y, 반지름 — 그림 기준 0~1)에만 원래 색이 돌아온다.
 ## 위치는 tools/tone_preview.py로 미리 본다(같은 공식).
@@ -590,8 +591,47 @@ func _close_modal() -> void:
 func _modal_title(t: String) -> void:
 	var l := Label.new()
 	l.text = t
+	l.add_theme_font_override("font", font_bold)
 	l.add_theme_font_size_override("font_size", 26)
 	modal_body.add_child(l)
+
+
+## 창 안의 소제목 (예: 소지품, 세력 호감도)
+func _modal_heading(t: String) -> void:
+	var gap := Control.new()
+	gap.custom_minimum_size.y = 6
+	modal_body.add_child(gap)
+	modal_body.add_child(_heading_label(t, C_HEAD, 20))
+
+
+func _heading_label(t: String, col: Color = C_HEAD, size: int = 17) -> Label:
+	var l := Label.new()
+	l.text = t
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.add_theme_font_override("font", font_bold)
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", col)
+	return l
+
+
+func _desc_label(t: String, size: int = 14) -> Label:
+	var l := Label.new()
+	l.text = t
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", C_DIM)
+	return l
+
+
+## 항목 하나: 굵은 이름 + 흐린 설명
+func _entry(title_text: String, desc: String, col: Color = C_HEAD, size: int = 17) -> VBoxContainer:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 1)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(_heading_label(title_text, col, size))
+	if desc != "":
+		box.add_child(_desc_label(desc))
+	return box
 
 
 func _modal_text(t: String, col: Color = C_DIM, size: int = 16) -> Label:
@@ -608,7 +648,7 @@ func _open_start() -> void:
 	_open_modal(1)
 	_modal_title("새놀이")
 	_modal_text("량강도 백수군 청수리. 압록강 너머가 사라졌다. 평양은 그것을 \"미제의 기상무기\"라 부른다. 당신은 조사를 위해 파견된 국가보위성 소좌다. 그리고 당신의 이름이 지워지고 있다.")
-	_modal_text("출신을 고르시오", C_INK, 19)
+	_modal_heading("출신을 고르시오")
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 10)
@@ -617,17 +657,28 @@ func _open_start() -> void:
 	var archs: Array = game.world.ARCHETYPES
 	for i in archs.size():
 		var a: Dictionary = archs[i]
-		var stats := []
-		for k in ["int", "psy", "fys", "mot"]:
-			stats.append("%s %d" % [game.world.ATTRS[k].name, int(a.attrs[k])])
 		var b := Button.new()
-		b.text = "%s\n%s\n%s" % [a.name, a.desc, " · ".join(stats)]
-		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		b.custom_minimum_size = Vector2(355, 120)
-		b.add_theme_font_size_override("font_size", 16)
+		b.custom_minimum_size = Vector2(355, 130)
 		b.pressed.connect(_start_new.bind(i))
 		grid.add_child(b)
+		var m := MarginContainer.new()
+		m.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		for side_name in ["left", "right", "top", "bottom"]:
+			m.add_theme_constant_override("margin_" + side_name, 12)
+		m.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(m)
+		var box := _entry(a.name, a.desc, C_HEAD, 20)
+		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var stats := HBoxContainer.new()
+		stats.add_theme_constant_override("separation", 12)
+		for k in ["int", "psy", "fys", "mot"]:
+			var st := _heading_label("%s %d" % [game.world.ATTRS[k].name, int(a.attrs[k])], Color(Game.ATTR_COLORS[k]), 15)
+			st.autowrap_mode = TextServer.AUTOWRAP_OFF
+			stats.add_child(st)
+		box.add_child(stats)
+		for c in box.get_children() + stats.get_children():
+			c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		m.add_child(box)
 	_modal_text("판정: 2d6 + 기술 레벨 ≥ 난이도. 흰 판정은 기술이 오르면 재시도 가능, ● 붉은 판정은 단 한 번.", C_DIM, 14)
 
 
@@ -676,7 +727,7 @@ func _open_settings() -> void:
 
 
 func _setting_slider(label: String, value: float, lo: float, hi: float, on_change: Callable) -> void:
-	_modal_text(label, C_INK, 18)
+	modal_body.add_child(_heading_label(label, C_HEAD, 17))
 	var s := HSlider.new()
 	s.min_value = lo
 	s.max_value = hi
@@ -700,8 +751,8 @@ func _open_credits() -> void:
 		["글꼴", "나눔명조 (SIL Open Font License 1.1)"],
 		["엔진", "Godot Engine (MIT 허가)"],
 	]:
-		_modal_text(line[0], C_DIM, 14)
-		_modal_text(line[1], C_INK, 19)
+		modal_body.add_child(_heading_label(line[0], C_HEAD, 15))
+		_modal_text(line[1], C_INK, 18)
 	_modal_text("\n이 놀이는 꾸며낸 이야기이며, 실존 인물·단체와 관계없습니다.", C_DIM, 13)
 
 
@@ -712,20 +763,16 @@ func _open_sheet() -> void:
 	_modal_title("보위원 소좌 [이름 없음]")
 	_modal_text("기술 점수: %d · 각 기술은 속성 값만큼 추가로 올릴 수 있다." % int(game.S.sp))
 	if game.S.names.size() > 0:
-		_modal_text("수첩 — 기억한 이름: " + " · ".join(game.S.names), C_INK, 15)
+		_modal_heading("수첩 — 기억한 이름")
+		_modal_text(" · ".join(game.S.names), C_INK, 15)
 	var items := game.items_list()
 	if items.size() > 0:
-		_modal_text("소지품", C_INK, 19)
+		_modal_heading("소지품")
 		for it in items:
 			var row := HBoxContainer.new()
 			modal_body.add_child(row)
-			var l := Label.new()
-			l.text = "%s%s\n%s%s" % [it.name, (" ×%d" % it.count) if it.count > 1 else "", it.desc, (" · " + it.effect) if it.effect != "" else ""]
-			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			l.add_theme_font_size_override("font_size", 14)
-			l.add_theme_color_override("font_color", C_DIM)
-			row.add_child(l)
+			row.add_child(_entry(it.name + ((" ×%d" % it.count) if it.count > 1 else ""),
+				it.desc + ((" · " + it.effect) if it.effect != "" else ""), C_HEAD, 16))
 			if it.usable:
 				var b := Button.new()
 				b.text = "먹는다"
@@ -736,9 +783,11 @@ func _open_sheet() -> void:
 					_refresh())
 				row.add_child(b)
 	for section in game.sheet_extras():
-		_modal_text(section[0], C_INK, 19)
+		_modal_heading(section[0])
 		for line in section[1]:
-			_modal_text(line, C_DIM, 14)
+			var parts: PackedStringArray = line.split("\n", true, 1)
+			modal_body.add_child(_entry(parts[0], parts[1] if parts.size() > 1 else "", C_INK, 16))
+	_modal_heading("기술")
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 24)
@@ -750,7 +799,8 @@ func _open_sheet() -> void:
 		var head := Label.new()
 		head.text = "%s %d" % [game.world.ATTRS[a].name, int(game.S.attrs[a])]
 		head.add_theme_color_override("font_color", Color(Game.ATTR_COLORS[a]))
-		head.add_theme_font_size_override("font_size", 20)
+		head.add_theme_font_override("font", font_bold)
+		head.add_theme_font_size_override("font_size", 21)
 		col.add_child(head)
 		for k in game.world.SKILLS:
 			var sk: Dictionary = game.world.SKILLS[k]
@@ -758,13 +808,14 @@ func _open_sheet() -> void:
 				continue
 			var row := HBoxContainer.new()
 			col.add_child(row)
-			var l := Label.new()
 			var tb := game.thought_bonus(k)
-			l.text = "%s %d%s\n%s" % [sk.name, game.level(k), (" (%+d 사상)" % tb) if tb != 0 else "", sk.desc]
-			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			l.add_theme_font_size_override("font_size", 15)
-			row.add_child(l)
+			var ib := game.item_bonus(k)
+			var extra := ""
+			if tb != 0:
+				extra += " (%+d 사상)" % tb
+			if ib != 0:
+				extra += " (%+d 장비)" % ib
+			row.add_child(_entry("%s %d%s" % [sk.name, game.level(k), extra], sk.desc, Color(Game.ATTR_COLORS[a]).lightened(0.15), 16))
 			if int(game.S.sp) > 0 and int(game.S.bought.get(k, 0)) < int(game.S.attrs[a]):
 				var b := Button.new()
 				b.text = "+"
@@ -788,7 +839,7 @@ func _open_thoughts() -> void:
 		if id != t.active:
 			_thought_card(id, "known")
 	if t.done.size() > 0:
-		_modal_text("내면화된 사상", C_INK, 19)
+		_modal_heading("내면화된 사상")
 		for id in t.done:
 			_thought_card(id, "done")
 	if t.active == "" and t.known.is_empty() and t.done.is_empty():
@@ -800,9 +851,12 @@ func _thought_card(id: String, state: String) -> void:
 	var bonus := []
 	for k in th.bonus:
 		bonus.append("%s %+d" % [game.world.SKILLS[k].name, int(th.bonus[k])])
-	_modal_text("「%s」" % th.name, C_INK, 18)
-	_modal_text(th.a if state == "done" else th.q, C_DIM, 15)
-	_modal_text("효과: %s · 내면화 %d턴" % [", ".join(bonus), int(th.time)], C_DIM, 14)
+	var gap := Control.new()
+	gap.custom_minimum_size.y = 4
+	modal_body.add_child(gap)
+	modal_body.add_child(_heading_label("「%s」" % th.name, C_HEAD, 18))
+	_modal_text(th.a if state == "done" else th.q, C_INK, 15)
+	_modal_text("효과: %s · 내면화 %d턴" % [", ".join(bonus), int(th.time)], C_DIM, 13)
 	if state == "active":
 		_modal_text("내면화 중… %d/%d" % [int(game.S.thoughts.progress), int(th.time)], Color("#dfe3e3"), 14)
 	elif state == "known" and game.S.thoughts.active == "":
