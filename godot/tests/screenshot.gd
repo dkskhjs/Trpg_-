@@ -47,6 +47,35 @@ func _init() -> void:
 	main._refresh()
 	await create_timer(2.5).timeout
 	await _snap(out + "/g_pale.png")
+	# 명부: 1일째 박순녀에게서 받은 직후(세 집이 하얗다) → 이름을 되찾은 뒤 · 확장 분기 약도 · 삼지연 약도
+	main.game.new_game(0)
+	for n in ["room", "square", "park", "park_list"]:
+		main.game.go(n)
+	main.game.apply({"item": "ledger"})
+	main._refresh()
+	await create_timer(0.5).timeout
+	await _snap(out + "/g_ledger_side.png")
+	main._open_ledger("people")
+	await _frames(5)
+	await _snap(out + "/g_ledger_people.png")
+	main._open_ledger("cheongsu")
+	await _frames(5)
+	await _snap(out + "/g_ledger_map1.png")
+	for n in ["station", "market", "graves", "night1", "square2", "park_home2", "park_names"]:
+		main.game.go(n)
+	main.game.S.flags["pale_expanded"] = true
+	main.game.go("square3")
+	main._open_ledger("people")
+	await _frames(5)
+	await _snap(out + "/g_ledger_people2.png")
+	main._open_ledger("cheongsu")
+	await _frames(5)
+	await _snap(out + "/g_ledger_map2.png")
+	for n in ["d5_arrive", "d5_hub", "d5_plaza", "d5_bear", "d5_lab"]:
+		main.game.go(n)
+	main._open_ledger("samjiyon")
+	await _frames(5)
+	await _snap(out + "/g_ledger_map3.png")
 	quit()
 
 

@@ -54,6 +54,9 @@ var mo_pips: HBoxContainer
 var pale_label: Label
 var sheet_btn: Button
 var thought_btn: Button
+var ledger_btn: Button
+var ledger_data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/ledger.json"))
+var ledger_tab := "people"
 var modal: Control
 var modal_body: VBoxContainer
 var rendered_serial := 0
@@ -181,6 +184,11 @@ func _build_layout() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	side.add_child(spacer)
+	# 명부: 얻은 뒤에만 보인다. 이 놀이의 중심 물건이라 따로 크게 둔다.
+	ledger_btn = _side_button(side, "명부 펼치기", func(): _open_ledger(ledger_tab))
+	ledger_btn.add_theme_color_override("font_color", C_HEAD)
+	ledger_btn.add_theme_font_override("font", font_bold)
+	ledger_btn.hide()
 	var buttons := GridContainer.new()
 	buttons.columns = 2
 	buttons.add_theme_constant_override("h_separation", 6)
@@ -471,6 +479,7 @@ func _render_side() -> void:
 	sheet_btn.text = "인물 · 기술" + (" (+%d)" % sp if sp > 0 else "")
 	var t: Dictionary = game.S.thoughts
 	thought_btn.text = "사상함" + (" (내면화 중)" if t.active != "" else (" (%d)" % t.known.size() if t.known.size() > 0 else ""))
+	ledger_btn.visible = game.item_count("ledger") > 0
 	_show_portrait(game.S.get("speaker", ""), game.S.node)
 	_show_background(background_for(game.node().scene, int(game.S.day)))
 
@@ -950,6 +959,71 @@ func _open_thoughts() -> void:
 			_thought_card(id, "done")
 	if t.active == "" and t.known.is_empty() and t.done.is_empty():
 		_modal_text("아직 품은 사상이 없다. 생각은 위험한 곳에서 온다.", C_INK)
+
+
+## 명부: 사람(세대별 이름) 장과 약도 장. 약도는 LedgerMap이 그린다.
+func _open_ledger(tab: String) -> void:
+	if not game.has_game() or game.item_count("ledger") <= 0:
+		return
+	ledger_tab = tab
+	_open_modal()
+	_modal_title("청수리 인민반 명부")
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 8)
+	modal_body.add_child(tabs)
+	var pages := [["people", "사람"]]
+	for m in ledger_data.maps:
+		if not m.has("show_if") or game.eval_cond(m.show_if):
+			pages.append([m.id, m.title])
+	for pg in pages:
+		var b := Button.new()
+		b.text = pg[1]
+		b.add_theme_font_size_override("font_size", 16)
+		if pg[0] == tab:
+			b.add_theme_font_override("font", font_bold)
+			b.add_theme_color_override("font_color", C_HEAD)
+		b.pressed.connect(_open_ledger.bind(pg[0]))
+		tabs.add_child(b)
+	if tab == "people":
+		_ledger_people()
+		return
+	for m in ledger_data.maps:
+		if m.id == tab:
+			_modal_text(m.note + "   ● 가 본 곳 · ○ 아는 곳 · 붉은 점 지금 있는 곳 · 하얀 자리 창백", C_DIM, 13)
+			var map := LedgerMap.new()
+			map.custom_minimum_size = Vector2(730, 340)
+			modal_body.add_child(map)
+			map.setup(game, m, ledger_data.households, font_regular)
+
+
+func _ledger_people() -> void:
+	_modal_text("48세대. 주소 순서대로. 네가 아는 집만 옮겨 적었다.", C_DIM, 14)
+	var listed := {}
+	for hh in ledger_data.households:
+		if hh.has("known_if") and not game.eval_cond(hh.known_if):
+			continue
+		var erased: bool = hh.get("erased", false) and not game.eval_cond(hh.get("restore_if", "false"))
+		modal_body.add_child(_heading_label("%s · %s" % [hh.addr, "　　　" if erased else hh.head], C_DIM if erased else C_HEAD, 17))
+		if erased:
+			modal_body.add_child(_desc_label("볼펜 자국의 홈만 남고 잉크가 없다. 옆에 박순녀의 글씨: 「이사 감」", 14))
+			continue
+		for person in hh.people:
+			listed[person.name] = true
+			var white: bool = person.has("white_if") and game.eval_cond(person.white_if)
+			var known := game.has_name(person.name)
+			var l := _desc_label(("　　 —  (하얗다)" if white else "　　 %s — %s" % [person.name, person.note]), 15)
+			if not white and known:
+				l.add_theme_color_override("font_color", C_INK)
+			modal_body.add_child(l)
+	var others := []
+	for nm in game.S.names:
+		if not listed.has(nm):
+			others.append(nm)
+	_modal_heading("빈 장에 적은 이름")
+	if others.is_empty():
+		_modal_text("아직 없다. 불러야 적을 수 있다.", C_DIM, 15)
+	else:
+		_modal_text(" · ".join(others), C_INK, 16)
 
 
 func _thought_card(id: String, state: String) -> void:

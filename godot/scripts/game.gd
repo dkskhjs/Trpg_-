@@ -263,8 +263,12 @@ func apply(fx) -> void:
 	if fx.has("ws"):
 		S.ws = ws() + int(fx.ws)
 	for k in _as_list(fx.get("item")):
+		if world.ITEMS[k].get("unique", false) and item_count(k) > 0:
+			continue
 		S.flags["item_" + k] = item_count(k) + 1
 		fx_note("소지품: " + world.ITEMS[k].name)
+		if k == "ledger":
+			sys("— 왼쪽 「명부」를 눌러 펼쳐 볼 수 있다 —")
 	for k in _as_list(fx.get("unitem")):
 		var n := item_count(k) - 1
 		if n > 0:

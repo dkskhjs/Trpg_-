@@ -148,7 +148,10 @@ python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
 | `item_notel` | 노텔(휴대용 DVD 플레이어) | `a cheap Chinese portable DVD player with a small flip screen, scratched, single object on cream paper` |
 | `item_dvd` | 「혁명가요 모음」 알판 | `a DVD in a plain paper sleeve with handwritten label, single object on cream paper, label illegible` |
 | `item_phone` | 중국 손전화 | `an old cracked smartphone with a glowing screen, single object on cream paper` |
-| `item_ledger` | 인민반 명단 | `a thin worn notebook with handwritten columns of names, some rewritten in fresh ink, single object on cream paper, writing illegible` |
+| `item_ledger` | 인민반 명부 | `a thin worn notebook with handwritten columns of names, some rewritten in fresh ink, single object on cream paper, writing illegible` |
+
+**명부 약도 (선택)**: 지금은 게임이 직접 연필 선으로 그린다. 손그림 종이 질감이 필요해지면 아래 바탕만 만들어 깔고, 장소 점과 글씨는 게임이 위에 그린다. 가로 1460×680.
+- `ledger_paper`: `a blank page of an old North Korean neighborhood unit ledger notebook, ruled lines in faded blue, one red margin line, yellowed cheap paper, coffee stains and pencil smudges at the edges, top fifth of the page bleached pure white as if erased, flat scan, no text`
 
 ## 6. 결말 일러스트 (선택)
 

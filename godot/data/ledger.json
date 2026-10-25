@@ -1,0 +1,54 @@
+{
+ "_doc": "명부(인민반 명부) 자료. 조건식은 game.gd의 eval_cond 문법(flag, visited, has_name, ws ...). nodes 중 하나라도 들른 적이 있으면 가 본 곳이고, 지금 장면 이름이 scenes 중 하나로 시작하면 지금 있는 곳이다.",
+ "households": [
+  {"addr": "1반 1호", "head": "박순녀네", "people": [
+   {"name": "박순녀", "note": "인민반장 20년"},
+   {"name": "정명수", "note": "아들 · 강 초소 하전사", "white_if": "flag(\"myeongsu_lost\") and not flag(\"wrote_myeongsu\") and not flag(\"myeongsu_back\")"}
+  ]},
+  {"addr": "1반 4호", "head": "리용남네", "erased": true, "restore_if": "flag(\"park_named\") or has_name(\"리용남\")", "people": [
+   {"name": "리용남", "note": "아들 둘. 막내가 다리를 절었다"}
+  ]},
+  {"addr": "2반 2호", "head": "한복실", "erased": true, "restore_if": "flag(\"park_named\") or has_name(\"한복실\")", "people": [
+   {"name": "한복실", "note": "혼자 산다. 두부를 잘 만들었다"}
+  ]},
+  {"addr": "2반 7호", "head": "문태식네", "erased": true, "restore_if": "flag(\"park_named\") or has_name(\"문태식\")", "people": [
+   {"name": "문태식", "note": "탄광에서 다쳐 기침을 달고 살았다"}
+  ]},
+  {"addr": "동쪽 언덕", "head": "기상관측소", "known_if": "flag(\"know_station\")", "people": [
+   {"name": "오영희", "note": "관측원. 남편 자리를 이어 이십몇 년째 숫자를 적는다"}
+  ]}
+ ],
+ "maps": [
+  {"id": "cheongsu", "title": "청수리 약도", "lake": false, "river": true, "note": "북쪽이 압록강. 강 건너는 그리지 않았다. 그릴 것이 없다.",
+   "places": [
+    {"id": "edge", "name": "창백의 경계", "x": 0.2, "y": 0.13, "nodes": ["edge3", "pale_hand_ok", "pale_hand_no", "pale_gaze_ok", "pale_gaze_no", "rep_walk"], "hidden": true, "scenes": ["창백의 가장자리", "창백의 경계"]},
+    {"id": "river", "name": "압록강 둑", "x": 0.46, "y": 0.37, "nodes": ["river", "r4_dawn", "r4_shore", "r4_mun", "finale"], "scenes": ["압록강 둑", "밤의 압록강"]},
+    {"id": "soldier", "name": "강 초소", "x": 0.74, "y": 0.36, "nodes": ["soldier"], "scenes": ["압록강 초소"]},
+    {"id": "inn", "name": "초대소", "x": 0.22, "y": 0.44, "nodes": ["room", "night1", "night2", "lockup"], "scenes": ["청수리 초대소", "초대소 구류실"]},
+    {"id": "square", "name": "광장", "x": 0.5, "y": 0.5, "nodes": ["square", "square2", "square3", "rally", "choi", "r4_village", "e4_village"], "scenes": ["청수리 광장", "광장 · 군용"]},
+    {"id": "park", "name": "박순녀네", "x": 0.6, "y": 0.62, "nodes": ["park_home2", "park3", "r4_park", "e4_park"], "scenes": ["박순녀의 집"]},
+    {"id": "station", "name": "기상관측소", "x": 0.86, "y": 0.38, "nodes": ["station", "station2", "station3", "r4_oh", "e4_oh"], "known_if": "flag(\"know_station\")", "scenes": ["기상관측소"]},
+    {"id": "market", "name": "장마당 뒷골목", "x": 0.3, "y": 0.7, "nodes": ["market", "cat2"], "scenes": ["장마당 뒷골목"]},
+    {"id": "graves", "name": "뒷산 공동묘지", "x": 0.52, "y": 0.88, "nodes": ["graves"], "scenes": ["뒷산 공동묘지"]},
+    {"id": "rail", "name": "협궤 철길", "x": 0.07, "y": 0.6, "nodes": ["r4_rail"], "hidden": true, "scenes": ["협궤 철길"]},
+    {"id": "road", "name": "남쪽 길 · 보천", "x": 0.8, "y": 0.92, "nodes": ["e4_road"], "hidden": true, "scenes": ["하얀 길"]}
+   ],
+   "erased_houses": [{"household": 1, "x": 0.69, "y": 0.58}, {"household": 2, "x": 0.72, "y": 0.69}, {"household": 3, "x": 0.63, "y": 0.75}],
+   "roads": [["inn", "square"], ["square", "river"], ["river", "soldier"], ["river", "edge"], ["square", "park"], ["square", "station"], ["square", "market"], ["market", "graves"], ["park", "graves"], ["inn", "rail"], ["park", "road"]]
+  },
+  {"id": "samjiyon", "title": "삼지연 약도", "show_if": "visited(\"d5_arrive\") > 0", "lake": true, "river": false, "note": "청수리 명부 뒷장에 그렸다. 연필이 모자라 길은 대충.",
+   "places": [
+    {"id": "hub", "name": "읍 갈림길", "x": 0.48, "y": 0.52, "nodes": ["d5_arrive", "d5_hub", "d5_night"], "scenes": ["삼지연 · 5일째", "삼지연 읍", "삼지연 · 밤"]},
+    {"id": "plaza", "name": "기념비 광장", "x": 0.5, "y": 0.22, "nodes": ["d5_plaza"], "scenes": ["삼지연 기념비"]},
+    {"id": "pioneers", "name": "답사숙영소", "x": 0.2, "y": 0.4, "nodes": ["d5_pioneers"], "scenes": ["삼지연 답사숙영소"]},
+    {"id": "purge", "name": "정리반 지휘소", "x": 0.82, "y": 0.3, "nodes": ["d5_purge"], "scenes": ["삼지연 · 정리반"]},
+    {"id": "lab", "name": "연구소 천막", "x": 0.5, "y": 0.66, "nodes": ["d5_lab"], "scenes": ["삼지연 못가"]},
+    {"id": "bear", "name": "곰쫓사 야영지", "x": 0.16, "y": 0.76, "nodes": ["d5_bear"], "scenes": ["숲 가장자리"]},
+    {"id": "track", "name": "곰 발자국", "x": 0.07, "y": 0.92, "nodes": ["d5_track_ok", "d5_track_no"], "hidden": true, "scenes": ["하얀 눈밭"]},
+    {"id": "caravan", "name": "얼음판 · 흰 길 상단", "x": 0.84, "y": 0.84, "nodes": ["d5_caravan"], "scenes": ["삼지연 못 얼음판"]}
+   ],
+   "erased_houses": [],
+   "roads": [["hub", "plaza"], ["hub", "pioneers"], ["hub", "purge"], ["hub", "lab"], ["hub", "bear"], ["bear", "track"], ["lab", "caravan"]]
+  }
+ ]
+}
