@@ -9,6 +9,7 @@ const C_DIM := Color("#8f877a")
 const C_OPT := Color("#d9c08a")
 const C_HP := Color("#d0625a")
 const C_MO := Color("#a68be0")
+const TYPE_CPS := 110.0   # 타자기 효과: 초당 글자 수
 ## 대사하는 인물 → 초상화 파일(art/portraits/<id>.webp). 없는 인물은 주인공 초상화를 유지한다.
 const PORTRAITS := {
 	"": ["hero", "보위원 소좌 [이름 없음]"],
@@ -45,6 +46,11 @@ var sound_btn: Button
 var portrait: TextureRect
 var portrait_caption: Label
 var portrait_id := ""
+var backgrounds: Array[TextureRect] = []
+var bg_active := 0
+var bg_id := ""
+var typing: Tween
+var instant_log := false
 
 
 func _ready() -> void:
@@ -150,10 +156,29 @@ func _build_layout() -> void:
 	sound_btn = _side_button(buttons, "소리: 켜짐", _toggle_sound)
 
 	# 오른쪽: 로그 + 선택지
+	# 본문 뒤에 장소 배경 두 장(교차 페이드용)과 글자를 읽을 수 있게 하는 어두운 막
+	var right := Control.new()
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right.clip_contents = true
+	row.add_child(right)
+	for i in 2:
+		var layer := TextureRect.new()
+		layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+		layer.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		layer.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		layer.modulate.a = 0.0
+		layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		right.add_child(layer)
+		backgrounds.append(layer)
+	var shade := ColorRect.new()
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(C_BG, 0.8)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	right.add_child(shade)
 	var main_col := VBoxContainer.new()
-	main_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_col.set_anchors_preset(Control.PRESET_FULL_RECT)
 	main_col.add_theme_constant_override("separation", 0)
-	row.add_child(main_col)
+	right.add_child(main_col)
 
 	var log_margin := MarginContainer.new()
 	log_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -167,6 +192,8 @@ func _build_layout() -> void:
 	log_view.scroll_following = true
 	log_view.selection_enabled = true
 	log_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	log_view.visible_characters_behavior = TextServer.VC_CHARS_BEFORE_SHAPING
+	log_view.gui_input.connect(_skip_on_click)
 	log_margin.add_child(log_view)
 
 	var sep := ColorRect.new()
@@ -177,6 +204,7 @@ func _build_layout() -> void:
 	opts_scroll = ScrollContainer.new()
 	opts_scroll.custom_minimum_size.y = 250
 	opts_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	opts_scroll.gui_input.connect(_skip_on_click)
 	main_col.add_child(opts_scroll)
 	var opts_margin := MarginContainer.new()
 	opts_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -301,15 +329,46 @@ func _toggle_sound() -> void:
 	sound_btn.text = "소리: " + ("꺼짐" if audio.muted else "켜짐")
 
 
+## 새로 붙은 로그만 타자기처럼 한 글자씩 드러낸다. 끝날 때까지 선택지는 숨긴다.
 func _render_log() -> void:
 	var entries: Array = game.S.log
 	var fresh := game.log_serial - rendered_serial
 	if rendered_serial == 0 or fresh > entries.size():
 		log_view.clear()
 		fresh = entries.size()
+	var before := log_view.get_total_character_count()
 	for i in range(entries.size() - fresh, entries.size()):
 		log_view.append_text(entries[i][1] + "\n\n")
 	rendered_serial = game.log_serial
+	var after := log_view.get_total_character_count()
+	if typing:
+		typing.kill()
+	if instant_log or after <= before:
+		instant_log = false
+		_finish_typing()
+		return
+	log_view.visible_characters = before
+	opts_box.visible = false
+	typing = create_tween()
+	typing.tween_property(log_view, "visible_characters", after, (after - before) / TYPE_CPS)
+	typing.finished.connect(_finish_typing)
+
+
+func _finish_typing() -> void:
+	if typing:
+		typing.kill()
+		typing = null
+	log_view.visible_characters = -1
+	opts_box.visible = true
+
+
+func _is_typing() -> bool:
+	return typing != null and typing.is_running()
+
+
+func _skip_on_click(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and _is_typing():
+		_finish_typing()
 
 
 func _render_side() -> void:
@@ -323,6 +382,41 @@ func _render_side() -> void:
 	var t: Dictionary = game.S.thoughts
 	thought_btn.text = "사상함" + (" (내면화 중)" if t.active != "" else (" (%d)" % t.known.size() if t.known.size() > 0 else ""))
 	_show_portrait(game.S.get("speaker", ""))
+	_show_background(background_for(game.node().scene, int(game.S.day)))
+
+
+## 장면 이름 → 배경(art/scenes/<id>.webp). 그림이 없는 장소는 빈 문자열(어두운 바탕).
+static func background_for(scene: String, day: int) -> String:
+	if "구류실" in scene or "결말" in scene or "어둠" in scene:
+		return ""
+	if "초대소" in scene:
+		return "inn_night" if "밤" in scene else "inn"
+	if "궐기대회" in scene:
+		return "rally"
+	if "경계" in scene:
+		return "edge"
+	if "압록강" in scene or "창백의 가장자리" in scene:
+		return "river"
+	if "관측소" in scene:
+		return "station"
+	if "광장" in scene or "군용 트럭" in scene or "박순녀의 집 앞" in scene:
+		return "square_pale" if day >= 3 else "square"
+	return ""
+
+
+func _show_background(id: String) -> void:
+	if id == bg_id:
+		return
+	bg_id = id
+	var path := "res://art/scenes/%s.webp" % id
+	var old := backgrounds[bg_active]
+	bg_active = 1 - bg_active
+	var nxt := backgrounds[bg_active]
+	var tw := create_tween().set_parallel()
+	tw.tween_property(old, "modulate:a", 0.0, 1.2)
+	if id != "" and ResourceLoader.exists(path):
+		nxt.texture = load(path)
+		tw.tween_property(nxt, "modulate:a", 1.0, 1.2)
 
 
 ## 이 장면에서 마지막으로 말한 인물의 초상화. 확성기·라디오처럼 초상화가 없는 목소리면 주인공.
@@ -407,6 +501,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if modal.visible:
 		if event.keycode == KEY_ESCAPE and game.has_game():
 			_close_modal()
+		return
+	if _is_typing():
+		if event.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER] or (event.keycode >= KEY_1 and event.keycode <= KEY_9):
+			_finish_typing()
 		return
 	var n: int = event.keycode - KEY_1
 	if n >= 0 and n < 9 and n < option_buttons.size() and not option_buttons[n].disabled:
@@ -577,6 +675,7 @@ func _on_save() -> void:
 func _on_load() -> void:
 	if game.load_game():
 		rendered_serial = 0
+		instant_log = true
 		game.sys("— 불러옴 —")
 		_close_modal()
 		_refresh()

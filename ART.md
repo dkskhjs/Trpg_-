@@ -57,6 +57,10 @@ rural North Korea 1990s–2000s, no text, no lettering, no watermark
 ## 4. 장소 배경
 
 공통 구도: `wide establishing shot, no people in the foreground, eye level`
+
+완성: `inn` `inn_night` `square` `square_pale` `rally` `river` `edge` `station` ✅ · 남은 것: `market` `park_home` `graves` `truck` `lockup` `finale` `dark`
+
+원본을 받으면 `python3 tools/prepare_backgrounds.py <폴더>`로 가공합니다. 원본은 `art_src/backgrounds/`에 보관되고, 블러를 먹인 버전이 `godot/art/scenes/`에 들어갑니다(블러 강도: `--blur 6`).
 `scene` 열은 게임 속 장면 이름입니다(이 이름으로 배경을 매칭합니다).
 
 | id | scene | 프롬프트 (스타일 블록 뒤에 붙임) |
