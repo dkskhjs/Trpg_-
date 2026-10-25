@@ -252,7 +252,7 @@ func _update_atmosphere() -> void:
 	var scene: String = game.node().scene
 	var ending: bool = game.node().get("ending", false)
 	var pale := game.pale_intensity()
-	audio.update(scene, int(game.S.day), ending, pale)
+	audio.update(scene, game.S.node, int(game.S.day), ending, pale, game.minutes())
 	audio.play_events(game.events)
 	_tween_param("intensity", clampf(pale + (0.5 if ending and "창백" in scene else 0.0), 0.0, 1.0), 2.0)
 	_tween_param("edge", AudioDirector.edge_for(scene), 2.0)

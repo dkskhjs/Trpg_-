@@ -16,7 +16,7 @@ Godot 4.3 이상에서 실행되는 데스크톱/모바일용 버전입니다. �
 | `scripts/main.gd` | 화면 구성과 입력 |
 | `scripts/audio_director.gd` | 장면별 배경음을 교차 재생하고 효과음을 냅니다 |
 | `shaders/pale.gdshader` | 창백 후처리 셰이더 |
-| `audio/` | 합성한 배경음과 효과음(OGG). `tools/make_audio.py`로 생성합니다 |
+| `audio/` | 합성한 환경음·음악·효과음(OGG). `tools/make_audio.py`, `tools/make_music.py`로 생성합니다 |
 | `data/story.json`, `data/world.json` | 시나리오 데이터. **직접 고치지 말고** 아래처럼 생성합니다 |
 | `fonts/` | 나눔명조 (SIL OFL 1.1, `OFL.txt` 참고) |
 | `tests/simulate.gd` | 헤드리스 무작위 플레이 테스트 |
@@ -46,9 +46,24 @@ npm run export
 | `amb_square` | 광장(1~2일째): 확성기에서 아나운서 → 행진곡 → 웅변이 번갈아 나옵니다 |
 | `amb_rally` | 궐기대회: 단상 웅변과 군중 구호 |
 | `amb_radio` | 관측소: 30년 전 방송이 나오는 낡은 라디오 |
-| `amb_room` | 초대소: 벽 너머로 들리는 확성기 |
+| `amb_room` | 초대소: 벽 너머로 들리는 확성기 목소리 |
 | `amb_night`, `amb_wind` | 밤, 묘지, 장마당, 확성기마저 하얘진 3일째 광장 |
 | `amb_pale` | 창백 드론. 노출이 쌓이거나 강가에 가까워질수록 커집니다 |
+
+### 음악 (`tools/make_music.py`)
+메인 테마는 이 게임을 위해 작곡한 행진곡입니다. 디스코 엘리시움처럼 시간대마다 같은 주제를 다르게 편곡한 곡이 흐릅니다.
+
+| 파일 | 언제 | 편곡 |
+|---|---|---|
+| `mus_morning` | 06~11시 | 메인 테마, 풀 밴드: 서주 → A → A' → B → 브리지 → A'' → 코다 |
+| `mus_day` | 11~17시 | 아코디언과 클라리넷, 가벼운 북 |
+| `mus_evening` | 17~21시 | 단조. 현악 위에 클라리넷과 호른 |
+| `mus_night` | 21시 이후, 밤 장면 | 오르골 독주 |
+| `mus_pale` | 강가·경계, 3일째 저녁 이후, 어두운 결말 | 늘어지고 음이 군데군데 지워진 주제 |
+| `mus_hope` | 진실·명부·이름 결말 | 느린 장조. 현악과 합창 |
+
+광장(1~2일째), 궐기대회, 관측소에서는 확성기와 라디오가 음악을 대신하므로 배경음악을 끕니다.
+다시 생성하려면 `python3 tools/make_music.py`를 실행하세요(특정 곡만: `python3 tools/make_music.py mus_day`).
 | `sfx_*` | 판정 성공·실패, 사상, 창백, 이름 |
 
 다시 생성하려면 `pip install numpy scipy`를 하고(ffmpeg 필요) `python3 tools/make_audio.py`를 실행하세요. 다른 소리로 바꾸려면 같은 이름의 `.ogg` 파일을 덮어쓰면 됩니다.

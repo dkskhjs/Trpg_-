@@ -1,5 +1,5 @@
-## 장면에 맞는 배경음을 교차 재생하고, 게임 이벤트에 효과음을 붙인다.
-## 소리는 전부 tools/make_audio.py로 합성한 것이다.
+## 장면에 맞는 환경음과 시간대별 음악을 교차 재생하고, 게임 이벤트에 효과음을 붙인다.
+## 소리는 전부 tools/make_audio.py와 tools/make_music.py로 합성한 것이다.
 class_name AudioDirector
 extends Node
 
@@ -8,6 +8,8 @@ const AMB_DB := {
 	"square": -6.0, "rally": -4.0, "radio": -3.0, "room": -6.0,
 	"night": -10.0, "wind": -10.0, "silence": -80.0,
 }
+const MUSIC_DB := -11.0
+const HOPEFUL_ENDINGS := ["end_truth", "end_names", "end_wake"]
 ## 창백 드론: 노출이 없으면 거의 안 들리고, 경계에서는 크게.
 const PALE_MIN_DB := -40.0
 const PALE_MAX_DB := -9.0
@@ -18,20 +20,16 @@ const SFX := {
 }
 
 var muted := false
-var _amb: Array[AudioStreamPlayer] = []
-var _active := 0
-var _current := ""
+var _amb := Layer.new()
+var _music := Layer.new()
 var _pale: AudioStreamPlayer
 var _sfx: Array[AudioStreamPlayer] = []
 var _streams := {}
 
 
 func _ready() -> void:
-	for i in 2:
-		var p := AudioStreamPlayer.new()
-		p.volume_db = -80.0
-		add_child(p)
-		_amb.append(p)
+	_amb.setup(self)
+	_music.setup(self)
 	_pale = AudioStreamPlayer.new()
 	_pale.stream = _load("amb_pale", true)
 	_pale.volume_db = PALE_MIN_DB
@@ -70,6 +68,27 @@ static func ambience_for(scene: String, day: int, ending: bool) -> String:
 	return "wind"
 
 
+## 디스코 엘리시움처럼 시간대마다 같은 주제의 다른 편곡이 흐른다.
+## 확성기·라디오에서 이미 음악이 나오는 곳에서는 끈다.
+static func music_for(scene: String, node_id: String, day: int, ending: bool, minutes: int) -> String:
+	if ending:
+		return "hope" if node_id in HOPEFUL_ENDINGS else "pale"
+	var amb := ambience_for(scene, day, ending)
+	if amb in ["square", "rally", "radio"]:
+		return "silence"
+	if "압록강" in scene or "창백" in scene or "경계" in scene:
+		return "pale"
+	if day >= 3 and minutes >= 17 * 60:
+		return "pale"
+	if "밤" in scene or "어둠" in scene or minutes >= 21 * 60:
+		return "night"
+	if minutes < 11 * 60:
+		return "morning"
+	if minutes < 17 * 60:
+		return "day"
+	return "evening"
+
+
 ## 창백 앞에 서 있을수록 드론이 커진다.
 static func edge_for(scene: String) -> float:
 	if "창백" in scene or "경계" in scene:
@@ -79,28 +98,47 @@ static func edge_for(scene: String) -> float:
 	return 0.0
 
 
-func update(scene: String, day: int, ending: bool, pale: float) -> void:
-	var key := ambience_for(scene, day, ending)
-	if key != _current:
-		_crossfade(key)
+func update(scene: String, node_id: String, day: int, ending: bool, pale: float, minutes: int) -> void:
+	var amb := ambience_for(scene, day, ending)
+	_amb.switch(amb, _load("amb_" + amb, true) if amb != "silence" else null, AMB_DB.get(amb, -80.0))
+	var mus := music_for(scene, node_id, day, ending, minutes)
+	_music.switch(mus, _load("mus_" + mus, true) if mus != "silence" else null, MUSIC_DB)
 	var edge := edge_for(scene)
 	var level := clampf(pale + edge * 0.8 + (0.7 if ending else 0.0), 0.0, 1.0)
 	var target := lerpf(PALE_MIN_DB, PALE_MAX_DB, sqrt(level))
 	create_tween().tween_property(_pale, "volume_db", target, FADE)
 
 
-func _crossfade(key: String) -> void:
-	_current = key
-	var old := _amb[_active]
-	_active = 1 - _active
-	var nxt := _amb[_active]
-	var tw := create_tween().set_parallel()
-	tw.tween_property(old, "volume_db", -80.0, FADE)
-	if key != "silence":
-		nxt.stream = _load("amb_" + key, true)
-		nxt.volume_db = -80.0
-		nxt.play()
-		tw.tween_property(nxt, "volume_db", AMB_DB[key], FADE)
+## 두 플레이어를 번갈아 쓰며 교차 페이드하는 소리 층.
+class Layer:
+	var players: Array[AudioStreamPlayer] = []
+	var active := 0
+	var current := ""
+	var owner: Node
+
+	func setup(o: Node) -> void:
+		owner = o
+		for i in 2:
+			var p := AudioStreamPlayer.new()
+			p.volume_db = -80.0
+			o.add_child(p)
+			players.append(p)
+
+	func switch(key: String, stream: AudioStream, db: float) -> void:
+		if key == current:
+			return
+		current = key
+		var old := players[active]
+		active = 1 - active
+		var nxt := players[active]
+		var tw := owner.create_tween().set_parallel()
+		tw.tween_property(old, "volume_db", -80.0, FADE)
+		tw.chain().tween_callback(old.stop)
+		if stream != null:
+			nxt.stream = stream
+			nxt.volume_db = -80.0
+			nxt.play()
+			owner.create_tween().tween_property(nxt, "volume_db", db, FADE)
 
 
 func play_events(events: Array) -> void:

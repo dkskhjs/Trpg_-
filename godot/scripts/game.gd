@@ -94,8 +94,13 @@ func pale_stage() -> String:
 	return PALE_STAGES[mini(4, int(S.pale) / 2)]
 
 
+## 그날 자정부터 지난 분. 아침 06:40에 시작해 선택 하나에 10분씩 흐른다.
+func minutes() -> int:
+	return mini(23 * 60 + 50, 6 * 60 + 40 + (int(S.ticks) - int(S.day_tick)) * 10)
+
+
 func clock_text() -> String:
-	var m := mini(23 * 60 + 50, 6 * 60 + 40 + (int(S.ticks) - int(S.day_tick)) * 10)
+	var m := minutes()
 	return "%d일째 · %02d:%02d · 주체 ??년" % [int(S.day), m / 60, m % 60]
 
 

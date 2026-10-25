@@ -390,10 +390,10 @@ def track_radio():
 
 
 def track_room():
-    """초대소: 방 울림과, 벽 너머로 웅웅대는 확성기."""
+    """초대소: 방 울림과, 벽 너머로 웅웅대는 확성기 목소리. (선율은 음악 층이 맡는다)"""
     sec = 42
     room = filt(noise(sec + 2, "brown"), "lowpass", 300) * 0.5
-    far = loudspeaker(np.concatenate([march(1), announcer(6)]), drive=3.0)[: (sec + 2) * SR]
+    far = loudspeaker(np.concatenate([np.zeros(14 * SR), announcer(6)]), drive=3.0)[: (sec + 2) * SR]
     far = np.pad(far, (0, max(0, (sec + 2) * SR - len(far))))
     far = filt(far, "lowpass", 550, 4) * 0.35   # 벽에 막힌 소리
     return loopable(room + far)
