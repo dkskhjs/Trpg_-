@@ -44,6 +44,8 @@ rural North Korea 1990s–2000s, no text, no lettering, no watermark
 
 완성: `hero` `park` `myeongsu` `oh` `cat` ✅ · 남은 것: `choi` `elder`
 
+게임에서는 초상화를 **흑백 + 인물별 포인트 색 하나**로 바꿔 보여줍니다(`godot/shaders/portrait.gdshader`). 원본 색은 신경 쓰지 않아도 됩니다. 창백 노출이 쌓이면 포인트 색이 빠집니다. 색은 `godot/scripts/main.gd`의 `PORTRAITS`에서 정하고, `python3 tools/tone_preview.py`로 미리 볼 수 있습니다.
+
 | id | 인물 | 프롬프트 (스타일 블록 뒤에 붙임) |
 |---|---|---|
 | `hero` | 주인공. 이름 없는 국가보위성 소좌, 45세 | `a gaunt 45-year-old Korean state security major, sharp cheekbones, unshaven, bloodshot tired eyes, olive military uniform with a small round lapel badge that has faded to blank white, hungover, haunted expression, one fingertip pale white` |

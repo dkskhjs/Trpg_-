@@ -10,16 +10,17 @@ const C_OPT := Color("#d9c08a")
 const C_HP := Color("#d0625a")
 const C_MO := Color("#a68be0")
 const TYPE_CPS := 110.0   # 타자기 효과: 초당 글자 수
-## 대사하는 인물 → 초상화 파일(art/portraits/<id>.webp). 없는 인물은 주인공 초상화를 유지한다.
+## 대사하는 인물 → [초상화 파일(art/portraits/<id>.webp), 이름표, 포인트 색].
+## 초상화는 흑백에 포인트 색 하나만 입힌다. 주인공은 이름이 지워진 사람이라 색이 없다(null).
 const PORTRAITS := {
-	"": ["hero", "보위원 소좌 [이름 없음]"],
-	"박순녀": ["park", "박순녀 — 인민반장"],
-	"정명수": ["myeongsu", "정명수 — 하전사"],
-	"하전사": ["myeongsu", "정명수 — 하전사"],
-	"오영희": ["oh", "오영희 — 기상관측원"],
-	"고양이": ["cat", "고양이 — 밀수꾼"],
-	"최경철": ["choi", "최경철 — 검열국 중좌"],
-	"노인": ["elder", "묘지기 노인"],
+	"": ["hero", "보위원 소좌 [이름 없음]", null],
+	"박순녀": ["park", "박순녀 — 인민반장", "#b8302b"],        # 완장
+	"정명수": ["myeongsu", "정명수 — 하전사", "#6e7d3a"],      # 군복
+	"하전사": ["myeongsu", "정명수 — 하전사", "#6e7d3a"],
+	"오영희": ["oh", "오영희 — 기상관측원", "#c98a2e"],        # 담뱃불
+	"고양이": ["cat", "고양이 — 밀수꾼", "#2a9e9b"],           # 휴대폰 불빛
+	"최경철": ["choi", "최경철 — 검열국 중좌", "#2c3e78"],     # 차가운 권력
+	"노인": ["elder", "묘지기 노인", "#8a6a4a"],               # 흙
 }
 
 var game := Game.new()
@@ -125,6 +126,9 @@ func _build_layout() -> void:
 	portrait.custom_minimum_size = Vector2(260, 300)
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	var tone := ShaderMaterial.new()
+	tone.shader = preload("res://shaders/portrait.gdshader")
+	portrait.material = tone
 	side.add_child(portrait)
 	portrait_caption = _dim_label(14)
 	side.add_child(portrait_caption)
@@ -426,10 +430,15 @@ func _show_portrait(speaker: String) -> void:
 	if not ResourceLoader.exists(path):
 		entry = PORTRAITS[""]
 		path = "res://art/portraits/hero.webp"
+	var tone: ShaderMaterial = portrait.material
+	tone.set_shader_parameter("pale", game.pale_intensity())
 	if entry[0] == portrait_id:
 		return
 	portrait_id = entry[0]
 	portrait_caption.text = entry[1]
+	tone.set_shader_parameter("strength", 0.0 if entry[2] == null else 0.85)
+	if entry[2] != null:
+		tone.set_shader_parameter("accent", Color(entry[2]))
 	portrait.texture = load(path)
 	portrait.modulate.a = 0.0
 	create_tween().tween_property(portrait, "modulate:a", 1.0, 0.6)
