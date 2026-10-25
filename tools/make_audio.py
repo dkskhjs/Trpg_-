@@ -240,35 +240,6 @@ def consonant(dur):
     return filt(rng.standard_normal(n), "bandpass", [lo, min(lo * 2.2, 15000)], 2) * env_ar(n, 0.005, dur * 0.6) * 0.25
 
 
-def speech(seconds, f0=145, rate=6.0, rise=0.5, vibrato=0.0, shout=True, pause=(0.5, 1.1)):
-    """구호를 외치는 듯한 억양의 알아들을 수 없는 말. 구절 끝으로 갈수록 높아지고 마지막 음절을 길게 끈다."""
-    out = np.zeros(int((seconds + 3) * SR))
-    t = 0.3
-    names = list(VOWELS)
-    while t < seconds:
-        n_syl = int(rng.integers(5, 13))
-        for s in range(n_syl):
-            last = s == n_syl - 1
-            prog = s / max(1, n_syl - 1)
-            dur = (1 / rate) * rng.uniform(0.7, 1.2) * (2.8 if last and shout else 1)
-            base = f0 * (1 + rise * prog ** 2) * rng.uniform(0.95, 1.05)
-            tt = t_axis(dur)
-            curve = base * (1 + 0.06 * np.sin(np.pi * tt / dur))
-            if vibrato:
-                curve *= 1 + vibrato * np.sin(2 * np.pi * 6.0 * tt)
-            if last and shout:
-                curve *= 1 + 0.12 * np.clip(tt / dur * 2, 0, 1)
-            v = vowel(curve, names[rng.integers(len(names))]) * env_ar(len(tt), 0.02, 0.05)
-            amp = 0.6 + 0.4 * prog + (0.3 if last else 0)
-            if rng.random() < 0.7:
-                place(out, consonant(rng.uniform(0.02, 0.06)), t)
-                t += 0.03
-            place(out, v * amp, t)
-            t += dur
-        t += rng.uniform(*pause)
-    return out[: int(seconds * SR)]
-
-
 # 웅변의 억양 윤곽. 0~1 위치 → 기준음 대비 비율. 구절마다 하나를 골라 단조로운 '음계'를 피한다.
 CONTOURS = {
     "declare": lambda x: 0.30 - 0.40 * x + 0.10 * np.sin(np.pi * x * 1.5),   # 높게 시작해 가라앉는 서술조
@@ -278,10 +249,10 @@ CONTOURS = {
 }
 
 
-def oration_phrase(f0, kind):
+def oration_phrase(f0, kind, rate_range=(4.6, 6.4), vibrato=0.0):
     """억양 윤곽을 따라 음높이가 음절 사이로 미끄러지는 한 구절."""
     n_syl = int(rng.integers(4, 11))
-    rate = rng.uniform(4.6, 6.4)
+    rate = rng.uniform(*rate_range)
     shape = CONTOURS[kind]
     targets = [f0 * (1 + shape(i / max(1, n_syl - 1)) + rng.normal(0, 0.03)) for i in range(n_syl + 1)]
     accents = rng.random(n_syl) < 0.25
@@ -299,6 +270,8 @@ def oration_phrase(f0, kind):
         if last:   # 마지막 음절: 외치거나, 툭 떨어뜨리거나
             b = a * (1.06 if kind == "exhort" else rng.uniform(0.8, 0.9))
         curve = a + (b - a) * (tt / dur) ** 1.3
+        if vibrato:
+            curve = curve * (1 + vibrato * np.sin(2 * np.pi * rng.uniform(5.5, 6.5) * tt))
         amp = (0.75 + 0.35 * accents[i] + (0.35 if last and kind == "exhort" else 0)) * rng.uniform(0.85, 1.0)
         v = vowel(curve, names[rng.integers(len(names))]) * env_ar(len(tt), 0.02, 0.06) * amp
         if rng.random() < 0.7:
@@ -309,23 +282,27 @@ def oration_phrase(f0, kind):
 
 def orator(seconds):
     """남성 웅변가: 구절마다 다른 억양으로, 사이사이 숨을 고르며."""
+    return oration(seconds, lambda kind: oration_phrase(rng.uniform(120, 150), kind))
+
+
+def announcer(seconds):
+    """여성 아나운서: 높고 떨리는 격앙된 낭독조. 억양은 웅변과 같은 방식으로 구절마다 바뀐다."""
+    return oration(seconds, lambda kind: oration_phrase(rng.uniform(245, 290), kind, (5.4, 7.0), 0.03))
+
+
+def oration(seconds, make_phrase):
     out = []
     total = 0.0
     kinds = list(CONTOURS)
     rng.shuffle(kinds)
     i = 0
     while total < seconds:
-        ph = oration_phrase(rng.uniform(120, 150), kinds[i % len(kinds)])
+        ph = make_phrase(kinds[i % len(kinds)])
         gap = np.zeros(int(rng.uniform(0.35, 1.0) * SR))
         out += [ph, gap]
         total += (len(ph) + len(gap)) / SR
         i += 1
     return np.concatenate(out)[: int(seconds * SR)]
-
-
-def announcer(seconds):
-    """여성 아나운서: 높고 떨리는, 격앙된 낭독조."""
-    return speech(seconds, f0=265, rate=6.5, rise=0.45, vibrato=0.035, pause=(0.4, 0.8))
 
 
 def crowd_chant(syllables=("i", "u", "i", "a"), rhythm=(0.22, 0.22, 0.22, 0.6), voices=45):
@@ -369,7 +346,7 @@ def wind(seconds, strength=1.0):
 def track_square():
     """광장: 멀리 확성기에서 아나운서 → 행진곡 → 웅변이 번갈아 흐른다."""
     m = march(2)                                  # ~33초
-    a = announcer(12)
+    a = announcer(8)
     o = orator(9)
     prog = np.concatenate([a, np.zeros(SR), m, np.zeros(SR), o, np.zeros(2 * SR)])
     prog = loudspeaker(prog, drive=3.5, distance=0.35)
@@ -400,7 +377,7 @@ def track_rally():
 def track_radio():
     """관측소의 낡은 라디오: 30년 전 방송, 잡음, 주파수 흔들림."""
     sec = 36
-    prog = np.concatenate([announcer(14), np.zeros(SR // 2), march(1)[: int(8 * SR)] * 0.6, announcer(14)])[: sec * SR + 2 * SR]
+    prog = np.concatenate([announcer(5), np.zeros(SR), march(1)[: int(16 * SR)] * 0.6, np.zeros(SR), announcer(5), np.zeros(10 * SR)])[: sec * SR + 2 * SR]
     prog = filt(prog, "bandpass", [320, 2600], 4)
     t = t_axis(len(prog) / SR)
     wobble = 0.65 + 0.35 * np.sin(2 * np.pi * t / 7.3) * np.sin(2 * np.pi * t / 2.9)
@@ -416,7 +393,7 @@ def track_room():
     """초대소: 방 울림과, 벽 너머로 웅웅대는 확성기."""
     sec = 42
     room = filt(noise(sec + 2, "brown"), "lowpass", 300) * 0.5
-    far = loudspeaker(np.concatenate([march(1), announcer(10)]), drive=3.0)[: (sec + 2) * SR]
+    far = loudspeaker(np.concatenate([march(1), announcer(6)]), drive=3.0)[: (sec + 2) * SR]
     far = np.pad(far, (0, max(0, (sec + 2) * SR - len(far))))
     far = filt(far, "lowpass", 550, 4) * 0.35   # 벽에 막힌 소리
     return loopable(room + far)
@@ -446,30 +423,53 @@ def track_pale():
 
 # ---------------------------------------------------------------- 효과음
 def sfx_dice():
-    out = np.zeros(int(0.7 * SR))
-    for k, (t, a) in enumerate([(0, 1), (0.09, .7), (0.16, .8), (0.27, .5), (0.33, .45), (0.42, .3), (0.48, .25)]):
-        n = int(0.05 * SR)
-        click = filt(rng.standard_normal(n), "bandpass", [1800 + 300 * (k % 3), 6500], 2) * np.exp(-np.linspace(0, 9, n))
-        place(out, click * a, t)
-    return reverb(out, 0.4, 0.2)
+    """나무 탁자 위를 구르는 주사위: 둔탁하고 낮은 '톡, 톡'."""
+    out = np.zeros(int(0.8 * SR))
+    hits = [(0, 1), (0.1, .75), (0.18, .8), (0.3, .5), (0.37, .45), (0.47, .3), (0.54, .22)]
+    for k, (t, a) in enumerate(hits):
+        n = int(0.09 * SR)
+        tt = np.arange(n) / SR
+        body = np.sin(2 * np.pi * (380 + 60 * (k % 3)) * tt) * np.exp(-tt * 45)       # 나무 울림
+        knock = filt(rng.standard_normal(n), "bandpass", [250, 1400], 2) * np.exp(-tt * 70)
+        place(out, (body * 0.7 + knock) * a, t)
+    return reverb(filt(out, "lowpass", 2200), 0.5, 0.2)
+
+
+def low_tone(freq, dur, attack=0.02):
+    """부드럽게 부푸는 낮은 금관풍 음. 고음 배음을 깎아 알림음처럼 들리지 않게 한다."""
+    t = t_axis(dur)
+    x = sum(np.sin(2 * np.pi * freq * k * t) * (0.6 ** (k - 1)) for k in range(1, 6))
+    x *= np.clip(t / attack, 0, 1) * np.exp(-t * 2.2)
+    return filt(x, "lowpass", 1200)
+
+
+def sfx_success():
+    """낮은 5도 → 으뜸음으로 해결되는 화음."""
+    out = np.zeros(int(2.0 * SR))
+    root = TONIC / 2   # B♭2
+    for f in (root * 1.5, root * 0.75):
+        place(out, low_tone(f, 1.4) * 0.8, 0)
+    for f in (root, root * 1.5, root * 2):
+        place(out, low_tone(f, 1.7, 0.04) * 0.7, 0.16)
+    place(out, kick(0.5) * 0.5, 0.16)
+    return reverb(out, 1.4, 0.35, 1800)
+
+
+def sfx_fail():
+    """낮게 가라앉는 불협화음과 둔탁한 북소리."""
+    t = t_axis(1.6)
+    sink = 1 - 0.06 * t           # 음이 살짝 처진다
+    x = (np.sin(2 * np.pi * 49 * sink * t) + 0.7 * np.sin(2 * np.pi * 52 * sink * t)
+         + 0.35 * np.sin(2 * np.pi * 73.4 * sink * t)) * np.exp(-t * 2.2)
+    x = filt(x, "lowpass", 500)
+    out = np.zeros(len(t))
+    place(out, kick(0.6) * 0.9, 0)
+    return reverb(x + out, 1.2, 0.3, 1200)
 
 
 def bell(freqs, dur=1.4):
     t = t_axis(dur)
     return sum(np.sin(2 * np.pi * f * t) * np.exp(-t * (2.5 + i)) / (i + 1) for i, f in enumerate(freqs))
-
-
-def sfx_success():
-    out = np.zeros(int(1.6 * SR))
-    place(out, bell([pitch(5) * 2, pitch(5) * 4.01]), 0)
-    place(out, bell([pitch(8) * 2, pitch(8) * 4.01]), 0.12)
-    return reverb(out, 1.0, 0.3)
-
-
-def sfx_fail():
-    t = t_axis(1.2)
-    x = (np.sin(2 * np.pi * 73 * t) + 0.6 * np.sin(2 * np.pi * 77.8 * t) + 0.3 * np.sin(2 * np.pi * 110 * t)) * np.exp(-t * 3)
-    return reverb(x, 1.0, 0.3)
 
 
 def sfx_click():
@@ -495,14 +495,21 @@ def sfx_name():
     return reverb(bell([pitch(1), pitch(1) * 2.0, pitch(1) * 3.0], 2.0), 1.2, 0.35)
 
 
+def render(name, fn):
+    """트랙마다 고정된 시드를 쓴다. 한 소리를 고쳐도 다른 소리는 바뀌지 않는다."""
+    global rng
+    rng = np.random.default_rng(sum(map(ord, name)) * 1997)
+    return fn()
+
+
 if __name__ == "__main__":
     for name, fn in [
         ("amb_square", track_square), ("amb_rally", track_rally), ("amb_radio", track_radio),
         ("amb_room", track_room), ("amb_night", track_night), ("amb_wind", track_wind), ("amb_pale", track_pale),
     ]:
-        save(name, fn(), 0.8, 3)
+        save(name, render(name, fn), 0.8, 3)
     for name, fn in [
         ("sfx_dice", sfx_dice), ("sfx_success", sfx_success), ("sfx_fail", sfx_fail), ("sfx_click", sfx_click),
         ("sfx_thought", sfx_thought), ("sfx_pale", sfx_pale), ("sfx_name", sfx_name),
     ]:
-        save(name, fn(), 0.85, 5)
+        save(name, render(name, fn), 0.85, 5)
