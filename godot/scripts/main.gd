@@ -33,6 +33,7 @@ const PORTRAITS := {
 	"서은하": ["seo", "서은하 — 곰쫓사 생물학 연구원", []],
 	"강동혁": ["kang", "강동혁 — 정리반장", []],
 	"백순자": ["baek", "백순자 — 흰 길 상단", []],
+	"은실": ["eunsil", "은실 — 누이", []],
 }
 ## 사람 대신 사물을 보여주는 장면: 노드 id → PORTRAITS와 같은 형식. 화자보다 먼저 적용한다.
 const NODE_PORTRAITS := {
@@ -497,6 +498,10 @@ static func background_for(scene: String, day: int) -> String:
 		return "keep"
 	if "구류실" in scene or "결말" in scene or "어둠" in scene:
 		return ""
+	if "무산군 보위부" in scene:
+		return "musan_office"
+	if "밀영" in scene:
+		return "miryeong_hall" if "해설관" in scene else ("miryeong_cave" if "동굴" in scene else "miryeong")
 	if "기념비 광장" in scene:
 		return "monument"
 	if "답사숙영소" in scene:

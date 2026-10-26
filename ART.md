@@ -136,8 +136,19 @@ python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
 | `baek` | 백순자. 흰 길 상단 우두머리, 60대 | `a shrewd Korean-Chinese woman merchant in her 60s, thick fur coat and hat, sled rope coiled on her shoulder, wry smile, a name tag pinned to her coat` |
 | `white_bear` | 하얀 곰 (장면 그림) | `a huge pale bear walking through a blank white snowfield, its fur the same color as the void, only its dark eyes and footprints visible` |
 
-### 5일째 이후 예정 장소
-삼지연 읍과 기념비 광장, 혁명전적지 해설관, 백두산 기슭 숲길, 밀영. 세력이 확정되면 연구소 천막, 연구대 야영지, 쑥 냄새 나는 동굴 입구, 하얀 곰 발자국이 찍힌 눈밭 등을 추가합니다.
+### 6일째 인물
+| id | 인물 | 프롬프트 |
+|---|---|---|
+| `eunsil` | 은실. 주인공의 누이, 17세 (1997년 봄) | `a thin 17-year-old Korean girl in a frost-covered padded cotton coat, 1990s North Korean countryside, holding a small cloth bundle with two bags of corn noodles, cheeks hollow from hunger but smiling gently, frost melting on her eyelashes` |
+| `young_eunseok` | 스물두 살의 주인공, 1996년 무산군 보위부 지도원 | `a 22-year-old Korean man in an oversized 1990s North Korean security officer uniform, sitting at a wooden desk with a fountain pen hovering over a form, coal stove glow on his face, frozen hesitation` |
+
+### 6일째 장소
+| id | 장소 | 프롬프트 |
+|---|---|---|
+| `miryeong` | 백두산 밀영 (전부 하얗고 개울만 남음) | `a small log cabin revolutionary site at the foot of Mount Paektu, slogan trees behind glass cases, everything bleached pure white like an overexposed photograph, except a small dark mountain stream running beside the cabin` |
+| `miryeong_hall` | 밀영 해설관 | `a dim revolutionary history exhibition hall, glass display cases with blank white labels and white photographs, a pointer stick leaning on a podium, one corner case holding an old attendance book and a lunch tin untouched by the white` |
+| `miryeong_cave` | 동굴 입구 (쑥 다발) | `a narrow rock cave entrance in a snowy forest, dried mugwort bundles hanging at the mouth, inside a blank white void with two dark eyes and a line of huge footprints` |
+| `musan_office` | 1996년 12월 무산군 보위부 2층 끝방 | `a cramped 1996 North Korean county security office at dawn, iron coal stove glowing red, two leader portraits in full color on the wall, a wooden desk with two typed forms and a fountain pen, snow outside the window turning to spring thaw at the edges` |
 
 ## 5. 소지품 그림 (선택)
 아이템 아이콘으로 쓸 수 있는 작은 그림입니다. 정사각형 512×512, 크림색 종이 바탕에 물건 하나만 그립니다.
