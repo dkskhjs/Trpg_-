@@ -55,6 +55,11 @@ func _init() -> void:
 			if lg.S.node != "square2":
 				ledger_stuck.append("lg_%s → %s" % [hid, lg.S.node])
 	print("명부 장면에서 못 돌아옴: ", ledger_stuck)
+	# 판정 난이도 이름: 모든 DC 값이 이름을 얻는지 (표에 없는 11 같은 값 포함)
+	for nid in _shared.story:
+		for o in _shared.story[nid].get("options", []):
+			if o.has("check") and _shared.diff_name(o.check.dc) == "":
+				_shared.errors.append("난이도 이름 없음: %s %s" % [nid, o.check.dc])
 	# 명부 자료: 적힌 노드가 실제로 있는지, 조건식이 해석되는지
 	var ledger: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/ledger.json"))
 	var bad_nodes := []

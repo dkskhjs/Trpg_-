@@ -81,8 +81,16 @@ func skill_color(k: String) -> String:
 	return ATTR_COLORS[world.SKILLS[k].attr]
 
 
+## 난이도 이름. 표에 없는 값(예: 11)은 그보다 낮은 가장 가까운 단계 이름을 쓴다.
 func diff_name(dc) -> String:
-	return world.DIFF[str(int(dc))]
+	var best := ""
+	var best_v := -1
+	for k in world.DIFF:
+		var v := int(k)
+		if v <= int(dc) and v > best_v:
+			best_v = v
+			best = world.DIFF[k]
+	return best if best != "" else str(int(dc))
 
 
 static func chance(lvl: int, dc: int) -> int:
