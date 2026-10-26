@@ -573,10 +573,10 @@ func _show_portrait(speaker: String, node_id: String = "") -> void:
 		path = "res://art/portraits/hero.webp"
 	var tone: ShaderMaterial = portrait.material
 	tone.set_shader_parameter("pale", game.pale_intensity())
+	portrait_caption.text = _hero_title() if entry[0] == "hero" else entry[1]
 	if entry[0] == portrait_id:
 		return
 	portrait_id = entry[0]
-	portrait_caption.text = _hero_title() if entry[0] == "hero" else entry[1]
 	var spots: Array = entry[2]
 	var packed := PackedVector3Array(spots)
 	packed.resize(4)
@@ -965,7 +965,15 @@ func _dossier_card() -> void:
 	modal_body.add_child(grid)
 	for row in dossier.rows:
 		var text := ""
-		for st in row.steps:
+		if row.has("items"):
+			var lines := []
+			for it in row.items:
+				if game.eval_cond(it["if"]):
+					lines.append(it.text)
+			if lines.is_empty():
+				continue
+			text = "\n".join(lines)
+		for st in row.get("steps", []):
 			if game.eval_cond(st["if"]):
 				text = st.text
 		var lab := _heading_label(row.label, C_HEAD, 15)

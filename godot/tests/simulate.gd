@@ -77,7 +77,7 @@ func _init() -> void:
 					bad_nodes.append(n)
 	var dossier: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/dossier.json"))
 	for row in dossier.rows:
-		for st in row.steps:
+		for st in row.get("steps", []) + row.get("items", []):
 			conds.append(st["if"])
 	for c in conds:
 		_shared.eval_cond(c)
