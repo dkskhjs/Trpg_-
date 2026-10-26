@@ -136,6 +136,20 @@ python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
 | `baek` | 백순자. 흰 길 상단 우두머리, 60대 | `a shrewd Korean-Chinese woman merchant in her 60s, thick fur coat and hat, sled rope coiled on her shoulder, wry smile, a name tag pinned to her coat` |
 | `white_bear` | 하얀 곰 (장면 그림) | `a huge pale bear walking through a blank white snowfield, its fur the same color as the void, only its dark eyes and footprints visible` |
 
+### 5일째 새 인물 (다른 세션에서 추가)
+| id | 인물 | 프롬프트 |
+|---|---|---|
+| `manbok` | 남만복. 군 인민위원회 문서 접수원, 50대 | `a cheerful balding Korean clerk in his 50s, sleeves protectors over a worn cadre suit, sitting behind a reception window piled with blank white files, embarrassed grin, a faint yellow porridge stain on his cuff` |
+| `tony` | 토니토니 촛불앞. 전직 청부업자, 상단 호위 | `a gaunt Korean man in his late 50s in a long dark padded coat, lighting a stub candle in broad daylight on a sled at the back of a smugglers caravan, a thick worn notebook in his other hand, polite cold eyes` |
+| `suhan` | 김수한무. 답사단 인솔 보조, 30세 | `a lanky 30-year-old Korean man with a youth league armband, a long scroll of paper with his very long name trailing from his hands into the snow, earnest anxious smile` |
+| `hyegong` | 혜공. 암자의 노승 | `an old Korean Buddhist monk in grey robes in a tiny forest hermitage, holding a blank wooden memorial tablet and an ink brush, behind him old memorial tablets with names that are not bleached white` |
+
+### 5일째 새 장소
+| id | 장소 | 프롬프트 |
+|---|---|---|
+| `archive` | 삼지연군 인민위원회 문서고 | `a cramped county archive room with floor-to-ceiling shelves of folders whose spines and labels have all gone blank white, a reception window with a single rubber stamp and an ink pad still dark red` |
+| `temple` | 숲가 암자 | `a tiny wooden Buddhist hermitage at the edge of a snowy birch forest, a small altar with rows of old memorial tablets whose names remain dark while everything around is white` |
+
 ### 6일째 인물
 | id | 인물 | 프롬프트 |
 |---|---|---|

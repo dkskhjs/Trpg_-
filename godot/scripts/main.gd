@@ -34,9 +34,17 @@ const PORTRAITS := {
 	"강동혁": ["kang", "강동혁 — 정리반장", []],
 	"백순자": ["baek", "백순자 — 흰 길 상단", []],
 	"은실": ["eunsil", "은실 — 누이", []],
+	"남만복": ["manbok", "남만복 — 문서 접수원", []],
+	"토니토니 촛불앞": ["tony", "토니토니 촛불앞 — 상단 호위", []],
+	"김수한무": ["suhan", "김수한무 — 답사단 인솔 보조", []],
+	"청년": ["suhan", "김수한무 — 답사단 인솔 보조", []],
+	"혜공": ["hyegong", "혜공 — 암자의 승려", []],
+	"노승": ["hyegong", "혜공 — 암자의 승려", []],
 }
 ## 사람 대신 사물을 보여주는 장면: 노드 id → PORTRAITS와 같은 형식. 화자보다 먼저 적용한다.
 const NODE_PORTRAITS := {
+	"d5_archive": ["manbok", "남만복 — 문서 접수원", []],
+	"d5_tony": ["tony", "토니토니 촛불앞 — 상단 호위", []],
 	"portrait": ["leader_portrait", "벽의 초상화 — 얼굴이 없다", [Vector3(0.18, 0.20, 0.14), Vector3(0.86, 0.24, 0.12), Vector3(0.20, 0.80, 0.12), Vector3(0.84, 0.82, 0.14)]],
 }
 const NODE_PORTRAIT_ALIASES := {"portrait_ignore": "portrait", "portrait_panic": "portrait", "portrait_wipe": "portrait"}
@@ -502,6 +510,12 @@ static func background_for(scene: String, day: int) -> String:
 		return "musan_office"
 	if "밀영" in scene:
 		return "miryeong_hall" if "해설관" in scene else ("miryeong_cave" if "동굴" in scene else "miryeong")
+	if "문서고" in scene:
+		return "archive"
+	if "암자" in scene:
+		return "temple"
+	if "맨 뒤 썰매" in scene:
+		return "caravan_ice"
 	if "기념비 광장" in scene:
 		return "monument"
 	if "답사숙영소" in scene:
