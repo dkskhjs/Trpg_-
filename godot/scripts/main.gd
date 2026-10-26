@@ -92,6 +92,10 @@ var typing: Tween
 var pale_overlay: ColorRect
 var shown_entries := 0   # 로그 창에 지금 그려진 항목 수
 const LOG_VIEW_KEEP := 150   # 로그 창에는 최근 항목만 남긴다(저장 기록은 그대로)
+## 새 대사와 지난 대사를 가르는 선. 지난 대사는 색을 빼고 흐리게 그린다.
+const LOG_DIVIDER := "[center][color=#a08a5c]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/color][/center]"
+const LOG_DIM := "#5d5850"
+var _re_color := RegEx.create_from_string("\\[/?color[^\\]]*\\]")
 var slow_checks := 0   # 초당 프레임이 낮게 나온 연속 횟수
 var fps_timer := 0.0
 var settings := Settings.load_or_default()
@@ -436,19 +440,21 @@ func _tween_param(param: String, to: float, secs: float) -> void:
 ## 새로 붙은 로그만 타자기처럼 한 글자씩 드러낸다. 끝날 때까지 선택지는 숨긴다.
 func _render_log() -> void:
 	var entries: Array = game.S.log
-	var fresh := game.log_serial - rendered_serial
-	if rendered_serial == 0 or fresh > entries.size() or shown_entries + fresh > LOG_VIEW_KEEP + 50:
-		# 처음부터 다시 그린다: 새 항목 앞에 최근 LOG_VIEW_KEEP개만
-		fresh = mini(fresh, entries.size())
-		log_view.clear()
-		var start := maxi(0, entries.size() - fresh - LOG_VIEW_KEEP)
-		for i in range(start, entries.size() - fresh):
-			log_view.append_text(entries[i][1] + "\n\n")
-		shown_entries = entries.size() - fresh - start
+	var fresh := mini(game.log_serial - rendered_serial, entries.size())
 	var before := log_view.get_total_character_count()
-	for i in range(entries.size() - fresh, entries.size()):
-		log_view.append_text(entries[i][1] + "\n\n")
-	shown_entries += fresh
+	if fresh > 0 or rendered_serial == 0:
+		# 매번 다시 그린다: 지난 글은 흐리게, 그 아래 구분선, 그 아래 새 글. 최근 LOG_VIEW_KEEP개만.
+		log_view.clear()
+		var old_end := entries.size() - fresh
+		var start := maxi(0, old_end - LOG_VIEW_KEEP)
+		for i in range(start, old_end):
+			log_view.append_text(_dim_entry(entries[i][1]) + "\n\n")
+		if old_end > start and fresh > 0:
+			log_view.append_text(LOG_DIVIDER + "\n\n")
+		before = log_view.get_total_character_count()
+		for i in range(old_end, entries.size()):
+			log_view.append_text(entries[i][1] + "\n\n")
+		shown_entries = entries.size() - start
 	rendered_serial = game.log_serial
 	var after := log_view.get_total_character_count()
 	if typing:
@@ -465,6 +471,10 @@ func _render_log() -> void:
 		typing_delay = 0.0
 	typing.tween_property(log_view, "visible_characters", after, (after - before) / settings.text_speed)
 	typing.finished.connect(_finish_typing)
+
+
+func _dim_entry(bb: String) -> String:
+	return "[color=%s]%s[/color]" % [LOG_DIM, _re_color.sub(bb, "", true)]
 
 
 func _finish_typing() -> void:
