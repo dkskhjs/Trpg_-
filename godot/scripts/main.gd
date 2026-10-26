@@ -114,6 +114,7 @@ func _ready() -> void:
 	add_child(audio)
 	audio.set_volumes(settings.master, settings.music)
 	audio.set_muted(settings.muted)
+	Game.migrate_old_save()
 	_show_title()
 
 
@@ -719,7 +720,9 @@ func _add_option_button(text: String, col: Color, cb: Callable) -> Button:
 
 func game_choose(st: Dictionary) -> void:
 	audio.click()
+	var day_before := int(game.S.day)
 	game.choose(st)
+	_autosave(int(game.S.day) != day_before)
 	_refresh()
 	opts_scroll.scroll_vertical = 0
 
@@ -860,12 +863,15 @@ func _start_new(i: int) -> void:
 	_close_modal()
 	title.hide()
 	_refresh()
+	_autosave(true)
 
 
 # ---------- 첫화면 ----------
 func _show_title() -> void:
 	_close_modal()
-	title.refresh(game.has_game() or FileAccess.file_exists(Game.SAVE_PATH))
+	if game.has_game():
+		_autosave(true)
+	title.refresh(game.has_game() or Game.latest_slot() != "")
 	title.show()
 	audio.play_title()
 
@@ -873,8 +879,8 @@ func _show_title() -> void:
 ## 이어하기: 진행 중인 판이 있으면 그대로 돌아가고, 없으면 저장한 판을 불러온다.
 func _on_continue() -> void:
 	if not game.has_game():
-		_on_load()
-		if not game.has_game():
+		var slot := Game.latest_slot()
+		if slot == "" or not _load_slot(slot):
 			return
 	title.hide()
 	_close_modal()
@@ -1260,20 +1266,72 @@ func _thought_card(id: String, state: String) -> void:
 
 
 # ---------- 저장 ----------
-func _on_save() -> void:
-	if not game.has_game():
+var last_autosave_ms := 0
+const AUTOSAVE_MS := 20000   # 자동 보관 간격. 날이 바뀌면 바로.
+
+## 자동 보관 칸(auto)에 조용히 보관한다. 웹에서는 저장할 때마다 브라우저 저장소에 쓰므로 간격을 둔다.
+func _autosave(force: bool = false) -> void:
+	if not game.has_game() or game.node().get("ending", false):
 		return
-	game.sys("— 보관되였습니다 —" if game.save_game() else "— 보관하지 못했습니다 —")
-	_render_log()
+	if not force and Time.get_ticks_msec() - last_autosave_ms < AUTOSAVE_MS:
+		return
+	if game.save_game("auto"):
+		last_autosave_ms = Time.get_ticks_msec()
+
+
+func _on_save() -> void:
+	if game.has_game():
+		_open_slots(true)
 
 
 func _on_load() -> void:
-	if game.load_game():
-		rendered_serial = 0
-		instant_log = true
-		game.sys("— 보관된 놀이를 불러왔습니다 —")
-		_close_modal()
-		_refresh()
-	elif game.has_game():
-		game.sys("— 보관된 놀이가 없습니다 —")
-		_render_log()
+	_open_slots(false)
+
+
+## 보관 칸 창. saving이면 1~3번 칸에 보관, 아니면 자동 칸까지 골라 불러온다.
+func _open_slots(saving: bool) -> void:
+	_open_modal(1)
+	_modal_title("보관하기" if saving else "불러오기")
+	_modal_text("칸을 골라 지금 판을 보관한다. 같은 칸에 보관하면 덮어쓴다." if saving else "불러올 칸을 고른다. 자동 칸은 고를 때마다, 날이 바뀔 때마다 저절로 보관된다.", C_DIM, 14)
+	for slot in Game.SLOTS:
+		if saving and slot == "auto":
+			continue
+		var info := Game.slot_info(slot)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		modal_body.add_child(row)
+		var title_text := "자동 보관" if slot == "auto" else "%s번 칸" % slot
+		var desc := "비어 있음"
+		if not info.is_empty():
+			desc = "%d일째 · %s · 기억한 이름 %d · 보관 %s" % [info.day, info.scene, info.names, info.when]
+		row.add_child(_entry(title_text, desc, C_HEAD if not info.is_empty() else C_DIM, 17))
+		var b := Button.new()
+		b.add_theme_font_size_override("font_size", 15)
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		if saving:
+			b.text = "덮어쓰기" if not info.is_empty() else "여기에 보관"
+			b.pressed.connect(func():
+				var ok := game.save_game(slot)
+				_close_modal()
+				game.sys(("— %s번 칸에 보관되였습니다 —" % slot) if ok else "— 보관하지 못했습니다 —")
+				_render_log())
+		else:
+			b.text = "불러오기"
+			b.disabled = info.is_empty()
+			b.pressed.connect(func(): _load_slot(slot))
+		row.add_child(b)
+
+
+func _load_slot(slot: String) -> bool:
+	if not game.load_game(slot):
+		return false
+	rendered_serial = 0
+	instant_log = true
+	game.sys("— 보관된 놀이를 불러왔습니다 (%s) —" % ("자동 보관" if slot == "auto" else slot + "번 칸"))
+	_close_modal()
+	title.hide()
+	_refresh()
+	_update_atmosphere()
+	return true
+
+

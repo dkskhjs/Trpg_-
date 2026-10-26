@@ -2,7 +2,8 @@
 class_name Game
 extends RefCounted
 
-const SAVE_PATH := "user://save.json"
+const SAVE_PATH := "user://save.json"   # 예전 한 칸짜리 보관 파일. 처음 열 때 1번 칸으로 옮긴다.
+const SLOTS := ["auto", "1", "2", "3"]   # auto: 자동 보관
 const LOG_LIMIT := 400
 const ATTR_COLORS := {"int": "#5fb0d0", "psy": "#a68be0", "fys": "#d0625a", "mot": "#d8b54c"}
 const PALE_STAGES := ["희미함", "번짐", "침식", "잠식", "백색"]
@@ -490,22 +491,68 @@ func close_ledger() -> void:
 
 
 # ---------- 저장 ----------
-func save_game() -> bool:
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+static func slot_path(slot: String) -> String:
+	return "user://save_%s.json" % slot
+
+
+## 예전 save.json을 1번 칸으로 옮긴다(이미 1번 칸이 있으면 그대로 둔다).
+static func migrate_old_save() -> void:
+	if FileAccess.file_exists(SAVE_PATH) and not FileAccess.file_exists(slot_path("1")):
+		DirAccess.rename_absolute(SAVE_PATH, slot_path("1"))
+
+
+func save_game(slot: String = "1") -> bool:
+	S.saved_at = int(Time.get_unix_time_from_system())
+	S.saved_scene = node().get("scene", "")
+	var f := FileAccess.open(slot_path(slot), FileAccess.WRITE)
 	if f == null:
 		return false
 	f.store_string(JSON.stringify(S))
+	f.close()   # 웹에서는 닫을 때 브라우저 저장소(IndexedDB)로 동기화된다
 	return true
 
 
-func load_game() -> bool:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return false
-	var data = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
-	if not data is Dictionary:
+func load_game(slot: String = "1") -> bool:
+	var data = read_slot(slot)
+	if data.is_empty():
 		return false
 	S = data
 	if not S.has("rep"):
 		S.rep = {}
 	log_serial = 0
 	return true
+
+
+static func read_slot(slot: String) -> Dictionary:
+	var path := slot_path(slot)
+	if not FileAccess.file_exists(path):
+		return {}
+	var data = JSON.parse_string(FileAccess.get_file_as_string(path))
+	return data if data is Dictionary else {}
+
+
+## 칸 목록에 보여 줄 요약. 비어 있으면 빈 사전.
+static func slot_info(slot: String) -> Dictionary:
+	var d := read_slot(slot)
+	if d.is_empty():
+		return {}
+	var t := int(d.get("saved_at", 0))
+	var when := Time.get_datetime_string_from_unix_time(t + _tz_offset(), true).substr(5, 11) if t > 0 else ""
+	return {"day": int(d.get("day", 1)), "scene": str(d.get("saved_scene", "")), "names": d.get("names", []).size(),
+		"saved_at": t, "when": when.replace("T", " ")}
+
+
+static func _tz_offset() -> int:
+	return int(Time.get_time_zone_from_system().get("bias", 0)) * 60
+
+
+## 가장 최근에 보관된 칸(없으면 빈 문자열). 첫화면의 이어하기가 쓴다.
+static func latest_slot() -> String:
+	var best := ""
+	var best_t := -1
+	for slot in SLOTS:
+		var info := slot_info(slot)
+		if not info.is_empty() and int(info.saved_at) > best_t:
+			best_t = int(info.saved_at)
+			best = slot
+	return best
