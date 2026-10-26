@@ -43,6 +43,8 @@ func _init() -> void:
 		lg.go("square2")
 		if r % 2 == 0:
 			lg.S.flags["park_named"] = true
+		if r % 5 == 0:
+			lg.S.flags["th_signature"] = true
 		for hid in ["yong", "bok", "tae"]:
 			lg.open_ledger("lg_" + hid, r % 3 != 0)
 			for step in 20:
@@ -73,6 +75,10 @@ func _init() -> void:
 			for n in pl.nodes:
 				if not _shared.story.has(n):
 					bad_nodes.append(n)
+	var dossier: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/dossier.json"))
+	for row in dossier.rows:
+		for st in row.steps:
+			conds.append(st["if"])
 	for c in conds:
 		_shared.eval_cond(c)
 	print("명부에 적힌 없는 노드: ", bad_nodes)

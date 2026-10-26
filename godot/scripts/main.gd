@@ -57,6 +57,7 @@ var thought_btn: Button
 var ledger_btn: Button
 var ledger_data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/ledger.json"))
 var ledger_tab := "people"
+var dossier: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/dossier.json"))
 var modal: Control
 var modal_body: VBoxContainer
 var rendered_serial := 0
@@ -575,7 +576,7 @@ func _show_portrait(speaker: String, node_id: String = "") -> void:
 	if entry[0] == portrait_id:
 		return
 	portrait_id = entry[0]
-	portrait_caption.text = entry[1]
+	portrait_caption.text = _hero_title() if entry[0] == "hero" else entry[1]
 	var spots: Array = entry[2]
 	var packed := PackedVector3Array(spots)
 	packed.resize(4)
@@ -880,8 +881,9 @@ func _open_sheet() -> void:
 	if not game.has_game():
 		return
 	_open_modal()
-	_modal_title("보위원 소좌 [이름 없음]")
+	_modal_title(_hero_title())
 	_modal_text("기술 점수: %d · 각 기술은 속성 값만큼 추가로 올릴 수 있다." % int(game.S.sp))
+	_dossier_card()
 	if game.S.names.size() > 0:
 		_modal_heading("수첩 — 기억한 이름")
 		_modal_text(" · ".join(game.S.names), C_INK, 15)
@@ -944,6 +946,36 @@ func _open_sheet() -> void:
 					_open_sheet()
 					_refresh())
 				row.add_child(b)
+
+
+## 주인공을 부르는 이름: 스스로 소리 내어 말해 보기 전까지는 하얗다.
+func _hero_title() -> String:
+	if game.has_game() and game.flag("said_own_name"):
+		return "보위원 소좌 한은석"
+	return "보위원 소좌 [이름 없음]"
+
+
+## 13국 신상 카드: 단서를 모을수록 한 줄씩 채워진다. 문장은 주인공의 추측이라 틀릴 수 있다.
+func _dossier_card() -> void:
+	_modal_heading("13국 신상 카드")
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 16)
+	grid.add_theme_constant_override("v_separation", 6)
+	modal_body.add_child(grid)
+	for row in dossier.rows:
+		var text := ""
+		for st in row.steps:
+			if game.eval_cond(st["if"]):
+				text = st.text
+		var lab := _heading_label(row.label, C_HEAD, 15)
+		lab.custom_minimum_size.x = 64
+		grid.add_child(lab)
+		var d := _desc_label(text, 15)
+		d.custom_minimum_size.x = 640
+		if text != "?" and not text.begins_with("[하얗다]"):
+			d.add_theme_color_override("font_color", C_INK)
+		grid.add_child(d)
 
 
 func _open_thoughts() -> void:
