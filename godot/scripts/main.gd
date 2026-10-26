@@ -92,9 +92,13 @@ var typing: Tween
 var pale_overlay: ColorRect
 var shown_entries := 0   # 로그 창에 지금 그려진 항목 수
 const LOG_VIEW_KEEP := 150   # 로그 창에는 최근 항목만 남긴다(저장 기록은 그대로)
-## 새 대사와 지난 대사를 가르는 선. 지난 대사는 색을 빼고 흐리게 그린다.
-const LOG_DIVIDER := "[center][color=#a08a5c]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/color][/center]"
-const LOG_DIM := "#5d5850"
+## 새 대사와 지난 대사를 가르는 막대. 글꼴에 없는 기호는 웹에서 안 보이므로 그림으로 그린다.
+## 지난 대사는 색을 빼고(LOG_DIM), 그 위에 블러 막(log_blur)을 덮는다.
+const LOG_DIM := "#7a7368"
+const C_DIVIDER := Color("#b89a5e")
+var log_blur: ColorRect
+var divider_tex: ImageTexture
+var divider_char := -1   # 막대가 들어간 글자 위치(블러 높이 계산용)
 var _re_color := RegEx.create_from_string("\\[/?color[^\\]]*\\]")
 var slow_checks := 0   # 초당 프레임이 낮게 나온 연속 횟수
 var fps_timer := 0.0
@@ -253,6 +257,13 @@ func _build_layout() -> void:
 	log_view = RichTextLabel.new()
 	log_view.bbcode_enabled = true
 	log_view.scroll_following = true
+	log_blur = ColorRect.new()
+	log_blur.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var blur_mat := ShaderMaterial.new()
+	blur_mat.shader = preload("res://shaders/log_blur.gdshader")
+	log_blur.material = blur_mat
+	log_blur.visible = false
+	log_view.add_child(log_blur)
 	log_view.selection_enabled = true
 	log_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	# 모양을 한 번만 잡고 보이는 글자 수만 바꾼다. 매 프레임 전체를 다시 배치하지 않아 긴 로그에서도 가볍다.
@@ -309,6 +320,7 @@ func _build_pale_overlay() -> void:
 
 ## 플레이 중 2초마다 초당 프레임을 보고, 세 번 연속 25 아래면 한 번만 가벼운 화면으로 바꾼다.
 func _process(delta: float) -> void:
+	_update_log_blur()
 	if settings.lite or settings.lite_auto_done or not game.has_game() or title.visible:
 		return
 	fps_timer += delta
@@ -449,8 +461,13 @@ func _render_log() -> void:
 		var start := maxi(0, old_end - LOG_VIEW_KEEP)
 		for i in range(start, old_end):
 			log_view.append_text(_dim_entry(entries[i][1]) + "\n\n")
+		divider_char = -1
 		if old_end > start and fresh > 0:
-			log_view.append_text(LOG_DIVIDER + "\n\n")
+			divider_char = log_view.get_total_character_count()
+			log_view.push_paragraph(HORIZONTAL_ALIGNMENT_CENTER)
+			log_view.add_image(_divider_texture())
+			log_view.pop()
+			log_view.append_text("\n\n")
 		before = log_view.get_total_character_count()
 		for i in range(old_end, entries.size()):
 			log_view.append_text(entries[i][1] + "\n\n")
@@ -471,6 +488,37 @@ func _render_log() -> void:
 		typing_delay = 0.0
 	typing.tween_property(log_view, "visible_characters", after, (after - before) / settings.text_speed)
 	typing.finished.connect(_finish_typing)
+
+
+func _divider_texture() -> ImageTexture:
+	var w := maxi(200, int(log_view.size.x * 0.82))
+	if divider_tex and divider_tex.get_width() == w:
+		return divider_tex
+	var img := Image.create(w, 7, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for x in w:
+		# 가운데가 진하고 양끝으로 사라지는 막대 + 가는 그림자 줄
+		var a := clampf(minf(x, w - 1 - x) / 40.0, 0.0, 1.0)
+		for y in range(2, 5):
+			img.set_pixel(x, y, Color(C_DIVIDER, a))
+		img.set_pixel(x, 6, Color(0, 0, 0, a * 0.5))
+	divider_tex = ImageTexture.create_from_image(img)
+	return divider_tex
+
+
+## 블러 막을 막대 위쪽에 맞춘다. 스크롤과 글자 흐름에 따라 매 프레임 갱신.
+func _update_log_blur() -> void:
+	if log_blur == null:
+		return
+	var on: bool = divider_char >= 0 and not settings.lite and log_view.is_ready()
+	var h := 0.0
+	if on:
+		var line := log_view.get_character_line(divider_char)
+		h = log_view.get_line_offset(line) - log_view.get_v_scroll_bar().value - 6.0
+	h = clampf(h, 0.0, log_view.size.y)
+	log_blur.visible = on and h > 2.0
+	log_blur.size = Vector2(log_view.size.x - log_view.get_v_scroll_bar().size.x - 4.0, h)
+	(log_blur.material as ShaderMaterial).set_shader_parameter("rect_h", h)
 
 
 func _dim_entry(bb: String) -> String:

@@ -7,6 +7,8 @@ func _init() -> void:
 	var out: String = OS.get_cmdline_user_args()[0] if OS.get_cmdline_user_args().size() > 0 else "user://"
 	var main = load("res://main.tscn").instantiate()
 	root.add_child(main)
+	main.settings.lite = false   # 테스트 기기가 느려 자동으로 켜졌을 수 있다
+	main.settings.lite_auto_done = true
 	await _frames(5)
 	await _snap(out + "/g_title.png")
 	main._open_start()

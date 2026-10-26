@@ -14,6 +14,8 @@ func _measure(label: String, secs: float) -> void:
 func _init() -> void:
 	var main = load("res://main.tscn").instantiate()
 	root.add_child(main)
+	main.settings.lite = false   # 테스트 기기가 느려 자동으로 켜졌을 수 있다
+	main.settings.lite_auto_done = true
 	for i in 10:
 		await process_frame
 	await _measure("첫화면", 2.0)
