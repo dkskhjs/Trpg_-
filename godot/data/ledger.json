@@ -1,17 +1,17 @@
 {
- "_doc": "명부(인민반 명부) 자료. 조건식은 game.gd의 eval_cond 문법(flag, visited, has_name, ws ...). nodes 중 하나라도 들른 적이 있으면 가 본 곳이고, 지금 장면 이름이 scenes 중 하나로 시작하면 지금 있는 곳이다.",
+ "_doc": "명부(인민반 명부) 자료. 조건식은 game.gd의 eval_cond 문법(flag, visited, has_name, ws ...). nodes 중 하나라도 들른 적이 있으면 가 본 곳이고, 지금 장면 이름이 scenes 중 하나로 시작하면 지금 있는 곳이다. 하얘진 집: name_if면 이름을 적었고(사람 장), called_if면 그 집 앞에서 불러 약도에 다시 그려진다.",
  "households": [
   {"addr": "1반 1호", "head": "박순녀네", "people": [
    {"name": "박순녀", "note": "인민반장 20년"},
    {"name": "정명수", "note": "아들 · 강 초소 하전사", "white_if": "flag(\"myeongsu_lost\") and not flag(\"wrote_myeongsu\") and not flag(\"myeongsu_back\")"}
   ]},
-  {"addr": "1반 4호", "head": "리용남네", "erased": true, "restore_if": "flag(\"park_named\") or has_name(\"리용남\")", "people": [
+  {"addr": "1반 4호", "head": "리용남네", "erased": true, "id": "yong", "name_if": "flag(\"park_named\") or flag(\"fixed_yong\") or has_name(\"리용남\")", "called_if": "flag(\"called_yong\")", "smudged_if": "flag(\"smudged_yong\") and not flag(\"park_named\")", "people": [
    {"name": "리용남", "note": "아들 둘. 막내가 다리를 절었다"}
   ]},
-  {"addr": "2반 2호", "head": "한복실", "erased": true, "restore_if": "flag(\"park_named\") or has_name(\"한복실\")", "people": [
+  {"addr": "2반 2호", "head": "한복실", "erased": true, "id": "bok", "name_if": "flag(\"park_named\") or flag(\"fixed_bok\") or has_name(\"한복실\")", "called_if": "flag(\"called_bok\")", "smudged_if": "flag(\"smudged_bok\") and not flag(\"park_named\")", "people": [
    {"name": "한복실", "note": "혼자 산다. 두부를 잘 만들었다"}
   ]},
-  {"addr": "2반 7호", "head": "문태식네", "erased": true, "restore_if": "flag(\"park_named\") or has_name(\"문태식\")", "people": [
+  {"addr": "2반 7호", "head": "문태식네", "erased": true, "id": "tae", "name_if": "flag(\"park_named\") or flag(\"fixed_tae\") or has_name(\"문태식\")", "called_if": "flag(\"called_tae\")", "smudged_if": "flag(\"smudged_tae\") and not flag(\"park_named\")", "people": [
    {"name": "문태식", "note": "탄광에서 다쳐 기침을 달고 살았다"}
   ]},
   {"addr": "동쪽 언덕", "head": "기상관측소", "known_if": "flag(\"know_station\")", "people": [

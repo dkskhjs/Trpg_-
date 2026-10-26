@@ -394,9 +394,14 @@ func _refresh() -> void:
 ## 소리와 셰이더를 현재 상태에 맞춘다.
 func _update_atmosphere() -> void:
 	var scene: String = game.node().scene
+	var node_id: String = game.S.node
+	if scene == "명부" and game.story.has(game.S.get("ledger_from", "")):
+		# 명부를 보는 동안에는 펼치기 전 장소의 소리를 그대로 둔다
+		node_id = game.S.ledger_from
+		scene = game.story[node_id].scene
 	var ending: bool = game.node().get("ending", false)
 	var pale := game.pale_intensity()
-	audio.update(scene, game.S.node, int(game.S.day), ending, pale, game.minutes())
+	audio.update(scene, node_id, int(game.S.day), ending, pale, game.minutes())
 	audio.play_events(game.events)
 	var k := settings.pale_strength
 	vista_fx.set_shader_parameter("strength", k)
@@ -487,7 +492,7 @@ func _render_side() -> void:
 ## 장면 이름 → 배경(art/scenes/<id>.webp). 그림이 없는 장소는 빈 문자열(어두운 바탕).
 ## "keep"이면 지금 배경을 유지한다(동행 대화처럼 장소가 바뀌지 않는 장면).
 static func background_for(scene: String, day: int) -> String:
-	if "동행" in scene:
+	if "동행" in scene or scene == "명부":
 		return "keep"
 	if "구류실" in scene or "결말" in scene or "어둠" in scene:
 		return ""
@@ -989,30 +994,84 @@ func _open_ledger(tab: String) -> void:
 		return
 	for m in ledger_data.maps:
 		if m.id == tab:
-			_modal_text(m.note + "   ● 가 본 곳 · ○ 아는 곳 · 붉은 점 지금 있는 곳 · 하얀 자리 창백", C_DIM, 13)
+			var reach := _ledger_reachable(m)
+			var legend := "● 가 본 곳 · ○ 아는 곳 · 붉은 점 지금 있는 곳 · 하얀 자리 창백"
+			if not reach.is_empty():
+				legend += " · 붉은 테두리를 누르면 그리로 간다"
+			_modal_text(m.note + "   " + legend, C_DIM, 13)
 			var map := LedgerMap.new()
-			map.custom_minimum_size = Vector2(730, 340)
+			map.custom_minimum_size = Vector2(730, 325)
 			modal_body.add_child(map)
-			map.setup(game, m, ledger_data.households, font_regular)
+			map.setup(game, m, ledger_data.households, font_regular, reach)
+			map.place_clicked.connect(func(id: String):
+				_close_modal()
+				game_choose(reach[id]))
+			map.house_clicked.connect(_ledger_open_line)
+
+
+## 약도에서 바로 갈 수 있는 곳: 지금 장면의 선택지 가운데 판정 없이 그 장소로 가는 것.
+## 이야기의 조건(req/not/once)을 그대로 따르므로, 약도는 길을 새로 내지 않고 이미 난 길을 보여줄 뿐이다.
+func _ledger_reachable(m: Dictionary) -> Dictionary:
+	var out := {}
+	if str(game.S.node).begins_with("lg_") or game.node().get("ending", false):
+		return out
+	var here: String = game.node().scene
+	for st in game.visible_options():
+		var o: Dictionary = st.opt
+		if st.locked or o.has("check") or not o.has("go") or not game.story.has(o.go):
+			continue
+		var target: String = game.story[o.go].scene
+		for pl in m.places:
+			if out.has(pl.id):
+				continue
+			var matches := func(sc: String) -> bool: return sc != "" and target.begins_with(sc)
+			var is_here := func(sc: String) -> bool: return here.begins_with(sc)
+			if pl.scenes.any(matches) and not pl.scenes.any(is_here):
+				out[pl.id] = st
+	return out
+
+
+## 지금 청수리 안에 있는가 (4일째까지). 하얘진 집 앞에서 이름을 부를 수 있는지 가른다.
+func _in_cheongsu() -> bool:
+	if int(game.S.day) > 4:
+		return false
+	var n: String = game.S.node
+	var scene: String = game.story[game.S.get("ledger_from", n)].scene if n.begins_with("lg_") else game.node().scene
+	for m in ledger_data.maps:
+		if m.id == "cheongsu":
+			for pl in m.places:
+				for sc in pl.scenes:
+					if scene.begins_with(sc):
+						return true
+	return false
+
+
+func _ledger_open_line(index: int) -> void:
+	if game.node().get("ending", false):
+		return
+	_close_modal()
+	game.open_ledger("lg_" + ledger_data.households[index].id, _in_cheongsu())
+	_refresh()
 
 
 func _ledger_people() -> void:
 	_modal_text("48세대. 주소 순서대로. 네가 아는 집만 옮겨 적었다.", C_DIM, 14)
 	var listed := {}
-	for hh in ledger_data.households:
+	for i in ledger_data.households.size():
+		var hh: Dictionary = ledger_data.households[i]
 		if hh.has("known_if") and not game.eval_cond(hh.known_if):
 			continue
-		var erased: bool = hh.get("erased", false) and not game.eval_cond(hh.get("restore_if", "false"))
-		modal_body.add_child(_heading_label("%s · %s" % [hh.addr, "　　　" if erased else hh.head], C_DIM if erased else C_HEAD, 17))
-		if erased:
-			modal_body.add_child(_desc_label("볼펜 자국의 홈만 남고 잉크가 없다. 옆에 박순녀의 글씨: 「이사 감」", 14))
+		if hh.get("erased", false):
+			_ledger_erased_line(i, hh)
+			for person in hh.people:
+				listed[person.name] = true
 			continue
+		modal_body.add_child(_heading_label("%s · %s" % [hh.addr, hh.head], C_HEAD, 17))
 		for person in hh.people:
 			listed[person.name] = true
 			var white: bool = person.has("white_if") and game.eval_cond(person.white_if)
-			var known := game.has_name(person.name)
 			var l := _desc_label(("　　 —  (하얗다)" if white else "　　 %s — %s" % [person.name, person.note]), 15)
-			if not white and known:
+			if not white and game.has_name(person.name):
 				l.add_theme_color_override("font_color", C_INK)
 			modal_body.add_child(l)
 	var others := []
@@ -1024,6 +1083,39 @@ func _ledger_people() -> void:
 		_modal_text("아직 없다. 불러야 적을 수 있다.", C_DIM, 15)
 	else:
 		_modal_text(" · ".join(others), C_INK, 16)
+
+
+## 하얘진 집 한 줄: 「이사 감」 → 이름을 적음 → 그 집 앞에서 불러 돌아옴. 줄을 누르면 명부 장면(lg_*)이 열린다.
+func _ledger_erased_line(i: int, hh: Dictionary) -> void:
+	var called := game.eval_cond(hh.called_if)
+	var named := game.eval_cond(hh.name_if)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	var head := _heading_label("%s · %s" % [hh.addr, hh.head if named else "　　　"], C_HEAD if called else C_DIM, 17)
+	head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(head)
+	var can_open: bool = not called and not game.node().get("ending", false)
+	if can_open:
+		var b := Button.new()
+		b.text = "이 줄을 들여다본다"
+		b.add_theme_font_size_override("font_size", 14)
+		b.pressed.connect(_ledger_open_line.bind(i))
+		row.add_child(b)
+	modal_body.add_child(row)
+	var p: Dictionary = hh.people[0]
+	var desc := ""
+	if called:
+		desc = "　　 %s — %s. 그 집 앞에서 불렀다. 잉크가 다시 고였다." % [p.name, p.note]
+	elif named:
+		desc = "　　 %s — %s. 연필로 적었다. 아직 그 집 앞에서 부르지 않았다." % [p.name, p.note]
+	elif game.eval_cond(hh.smudged_if):
+		desc = "　　 「이사 감」. 홈이 번졌다. 박순녀만 이 이름을 안다."
+	else:
+		desc = "　　 볼펜 자국의 홈만 남고 잉크가 없다. 옆에 박순녀의 글씨: 「이사 감」"
+	var l := _desc_label(desc, 14)
+	if called:
+		l.add_theme_color_override("font_color", C_INK)
+	modal_body.add_child(l)
 
 
 func _thought_card(id: String, state: String) -> void:

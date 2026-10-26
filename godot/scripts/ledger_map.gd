@@ -1,7 +1,11 @@
 ## 명부 뒷장에 연필로 그린 약도. 그림 파일 없이 직접 그린다(가볍고, 상태에 따라 바로 바뀐다).
 ## 가 본 곳은 먹으로 진하게, 아는 곳은 흐리게, 창백이 먹은 곳은 종이째 하얗게. 지금 있는 곳에만 붉은 물감 한 방울.
+## 붉은 테두리는 지금 바로 갈 수 있는 곳(누르면 이동). 하얘진 집을 누르면 그 집 줄을 연다.
 class_name LedgerMap
 extends Control
+
+signal place_clicked(place_id: String)
+signal house_clicked(household: int)
 
 const PAPER := Color("#cdc3ad")
 const RULE := Color("#b3a992")
@@ -15,14 +19,39 @@ var game: Game
 var page: Dictionary
 var households: Array
 var font: Font
+var reachable := {}   # place id -> true
 
 
-func setup(g: Game, p: Dictionary, hh: Array, f: Font) -> void:
+func setup(g: Game, p: Dictionary, hh: Array, f: Font, reach: Dictionary = {}) -> void:
 	game = g
 	page = p
 	households = hh
 	font = f
+	reachable = reach
 	queue_redraw()
+
+
+func _gui_input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+		return
+	for pl in page.places:
+		if reachable.has(pl.id) and event.position.distance_to(_pt(pl.x, pl.y)) < 22.0:
+			place_clicked.emit(pl.id)
+			accept_event()
+			return
+	for eh in page.get("erased_houses", []):
+		if event.position.distance_to(_pt(eh.x, eh.y)) < 20.0:
+			house_clicked.emit(int(eh.household))
+			accept_event()
+			return
+
+
+## 명부 장면을 보는 중이면, 명부를 펼치기 전 장면을 기준으로 한다.
+func _scene() -> String:
+	var n: String = game.S.node
+	if n.begins_with("lg_") and game.story.has(game.S.get("ledger_from", "")):
+		return game.story[game.S.ledger_from].scene
+	return game.node().scene
 
 
 func _pt(x: float, y: float) -> Vector2:
@@ -43,7 +72,7 @@ func _place_state(pl: Dictionary) -> String:
 
 
 func _here(pl: Dictionary) -> bool:
-	var scene: String = game.node().scene
+	var scene := _scene()
 	for sc in pl.get("scenes", []):
 		if scene.begins_with(sc):
 			return true
@@ -91,6 +120,24 @@ func _draw() -> void:
 		_draw_place(pl)
 	if page.get("river", false) and not game.flag("pale_receded"):
 		_draw_pale_creep()
+	if page.get("lake", false) and game.flag("caravan_route"):
+		_draw_caravan_route()
+
+
+## 백순자가 몽당연필로 그어 준 흰 길: 얼음판에서 하얀 쪽으로, 쉬어 가는 자리마다 동그라미.
+func _draw_caravan_route() -> void:
+	var poly := PackedVector2Array([_pt(1.0, 0.44)])
+	for i in 13:
+		var t := i / 12.0
+		poly.append(_pt(0.965 + 0.02 * sin(t * 9.0), 0.44 + t * 0.38))
+	poly.append(_pt(1.0, 0.82))
+	draw_colored_polygon(poly, PALE)
+	var pts := [Vector2(0.84, 0.84), Vector2(0.9, 0.76), Vector2(0.94, 0.69), Vector2(0.975, 0.62)]
+	for i in pts.size() - 1:
+		draw_dashed_line(_pt(pts[i].x, pts[i].y), _pt(pts[i + 1].x, pts[i + 1].y), INK, 1.5, 5.0)
+	for i in range(1, pts.size()):
+		draw_arc(_pt(pts[i].x, pts[i].y), 5.0, 0, TAU, 12, INK, 1.2)
+	_label(_pt(0.8, 0.6), "흰 길 → 장백", INK, 13)
 
 
 func _draw_river() -> void:
@@ -144,13 +191,19 @@ func _draw_lake() -> void:
 func _draw_erased(eh: Dictionary) -> void:
 	var hh: Dictionary = households[int(eh.household)]
 	var c := _pt(eh.x, eh.y)
-	var restored := game.eval_cond(hh.restore_if)
-	if restored:
+	if game.eval_cond(hh.called_if):
 		_house(c, INK, 1.5)
 		_label(c + Vector2(12, 5), hh.head, INK, 13)
+		return
+	draw_circle(c, 15.0, PALE)
+	_house(c, Color(FAINT, 0.35), 1.0)
+	if game.eval_cond(hh.name_if):
+		# 이름은 적었지만 아직 그 집 앞에서 부르지 않았다
+		_label(c + Vector2(12, 5), hh.head + "?", Color(FAINT, 0.9), 12)
+	elif game.eval_cond(hh.smudged_if):
+		for k in 3:
+			draw_line(c + Vector2(10, -2 + k * 3), c + Vector2(52, -5 + k * 3), Color(FAINT, 0.5), 2.0)
 	else:
-		draw_circle(c, 15.0, PALE)
-		_house(c, Color(FAINT, 0.35), 1.0)
 		_label(c + Vector2(12, 5), "이사 감", Color(FAINT, 0.8), 12)
 
 
@@ -169,6 +222,8 @@ func _draw_place(pl: Dictionary) -> void:
 	if at.x + w > size.x - 6:
 		at.x = c.x - 10 - w
 	_label(at, pl.name, col, 15)
+	if reachable.has(pl.id):
+		draw_arc(c, 12.0, 0, TAU, 24, Color(DROP, 0.75), 1.5)
 	if _here(pl):
 		# 지금 있는 곳: 붉은 물감 한 방울과 위성 방울
 		draw_circle(c + Vector2(-1, -1), 9.0, Color(DROP, 0.85))

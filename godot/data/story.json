@@ -1796,6 +1796,360 @@
    }
   ]
  },
+ "lg_yong": {
+  "scene": "명부",
+  "text": [
+   {
+    "if": "flag(\"called_yong\")",
+    "then": "1반 4호 · 리용남네. 줄 위의 이름이 진하다. 볼펜 홈에 잉크가 다시 고였다.",
+    "else": {
+     "if": "flag(\"park_named\") or flag(\"fixed_yong\")",
+     "then": "1반 4호. 「이사 감」 옆에 네가 써넣은 이름: 리용남. 아직 연필 자국처럼 흐리다. 쓴 것만으로는 모자라다는 듯이.",
+     "else": {
+      "if": "flag(\"smudged_yong\")",
+      "then": "1반 4호. 「이사 감」. 네 손끝이 지나간 자리가 번져 있다. 이 줄은 이제 박순녀의 기억에만 남았다.",
+      "else": "1반 4호. 볼펜 홈만 남고 잉크가 없다. 옆에 박순녀의 글씨: 「이사 감」."
+     }
+    }
+   },
+   {
+    "if": "not flag(\"called_yong\") and not (flag(\"park_named\") or flag(\"fixed_yong\")) and not flag(\"smudged_yong\")",
+    "then": "@hands: 홈은 아직 있다. 손끝으로 읽을 수 있을지도 모른다. 한 번뿐이다. 잘못 문지르면 홈이 무너진다."
+   },
+   {
+    "if": "not flag(\"called_yong\") and (flag(\"park_named\") or flag(\"fixed_yong\")) and not flag(\"lg_village\")",
+    "then": "@empathy: 이름은 그 집 앞에서 불러야 들린다. 청수리로 돌아가야 한다."
+   }
+  ],
+  "options": [
+   {
+    "t": "리용남네 빈 집 앞에 서서, 명부의 이름을 소리 내어 부른다.",
+    "go": "lg_yong_call",
+    "req": [
+     "lg_village"
+    ],
+    "cond": "flag(\"park_named\") or flag(\"fixed_yong\")",
+    "not": [
+     "called_yong"
+    ]
+   },
+   {
+    "t": "볼펜 홈을 손끝으로 더듬어 이름을 읽어낸다.",
+    "check": {
+     "s": "hands",
+     "dc": 11,
+     "red": true
+    },
+    "ok": "lg_yong_fix",
+    "no": "lg_yong_smudge",
+    "not": [
+     "park_named",
+     "fixed_yong",
+     "smudged_yong"
+    ]
+   },
+   {
+    "t": "명부를 덮는다.",
+    "go": "_return"
+   }
+  ]
+ },
+ "lg_yong_call": {
+  "scene": "명부",
+  "text": [
+   "너는 리용남네 집 앞에 선다. 문은 하얗다. 문틀만 연필 선처럼 남았다. 명부를 펼친다.",
+   "\"리용남. 리용남 동무. 아들 둘, 막내는 다리를 절고.\"",
+   "대답은 없다. 그런데 하얀 문에 문고리가 돌아온다. 그다음 문패 자리. 그다음 처마 밑 시래기 한 줄.",
+   {
+    "if": "flag(\"called_yong\") and flag(\"called_bok\") and flag(\"called_tae\")",
+    "then": "@empathy: 세 집이 다 돌아왔다. 사람은 아직이다. 그래도 마을이 자기 집이 몇 채인지 다시 셀 수 있게 됐다.",
+    "else": "@empathy: 사람은 돌아오지 않았다. 그래도 집이 자기가 누구네 집인지 기억해 냈다."
+   }
+  ],
+  "on": {
+   "flag": "called_yong",
+   "ws": 1,
+   "pale": -1,
+   "morale": 1
+  },
+  "options": [
+   {
+    "t": "명부를 덮는다.",
+    "go": "_return"
+   }
+  ]
+ },
+ "lg_yong_fix": {
+  "scene": "명부",
+  "text": [
+   "손끝에 홈이 걸린다. 박순녀가 처음 적을 때 꾹꾹 눌러 쓴 자국이다. 너는 그 위에 연필로 한 글자씩 다시 쓴다. 리용남.",
+   "@hands: 사람이 남긴 자국은 잉크보다 오래 간다. 창백은 잉크만 먹었다."
+  ],
+  "on": {
+   "flag": "fixed_yong",
+   "name": "리용남",
+   "sp": 1
+  },
+  "options": [
+   {
+    "t": "명부를 다시 본다.",
+    "go": "lg_yong"
+   }
+  ]
+ },
+ "lg_yong_smudge": {
+  "scene": "명부",
+  "text": [
+   "손끝이 미끄러진다. 홈이 무너지며 종이가 하얗게 일어난다.",
+   "@hands: 너무 세게 눌렀다. 지우는 사람들처럼."
+  ],
+  "on": {
+   "flag": "smudged_yong",
+   "morale": -1
+  },
+  "options": [
+   {
+    "t": "…",
+    "go": "lg_yong"
+   }
+  ]
+ },
+ "lg_bok": {
+  "scene": "명부",
+  "text": [
+   {
+    "if": "flag(\"called_bok\")",
+    "then": "2반 2호 · 한복실. 줄 위의 이름이 진하다. 볼펜 홈에 잉크가 다시 고였다.",
+    "else": {
+     "if": "flag(\"park_named\") or flag(\"fixed_bok\")",
+     "then": "2반 2호. 「이사 감」 옆에 네가 써넣은 이름: 한복실. 아직 연필 자국처럼 흐리다. 쓴 것만으로는 모자라다는 듯이.",
+     "else": {
+      "if": "flag(\"smudged_bok\")",
+      "then": "2반 2호. 「이사 감」. 네 손끝이 지나간 자리가 번져 있다. 이 줄은 이제 박순녀의 기억에만 남았다.",
+      "else": "2반 2호. 볼펜 홈만 남고 잉크가 없다. 옆에 박순녀의 글씨: 「이사 감」."
+     }
+    }
+   },
+   {
+    "if": "not flag(\"called_bok\") and not (flag(\"park_named\") or flag(\"fixed_bok\")) and not flag(\"smudged_bok\")",
+    "then": "@hands: 홈은 아직 있다. 손끝으로 읽을 수 있을지도 모른다. 한 번뿐이다. 잘못 문지르면 홈이 무너진다."
+   },
+   {
+    "if": "not flag(\"called_bok\") and (flag(\"park_named\") or flag(\"fixed_bok\")) and not flag(\"lg_village\")",
+    "then": "@empathy: 이름은 그 집 앞에서 불러야 들린다. 청수리로 돌아가야 한다."
+   }
+  ],
+  "options": [
+   {
+    "t": "한복실 빈 집 앞에 서서, 명부의 이름을 소리 내어 부른다.",
+    "go": "lg_bok_call",
+    "req": [
+     "lg_village"
+    ],
+    "cond": "flag(\"park_named\") or flag(\"fixed_bok\")",
+    "not": [
+     "called_bok"
+    ]
+   },
+   {
+    "t": "볼펜 홈을 손끝으로 더듬어 이름을 읽어낸다.",
+    "check": {
+     "s": "hands",
+     "dc": 11,
+     "red": true
+    },
+    "ok": "lg_bok_fix",
+    "no": "lg_bok_smudge",
+    "not": [
+     "park_named",
+     "fixed_bok",
+     "smudged_bok"
+    ]
+   },
+   {
+    "t": "명부를 덮는다.",
+    "go": "_return"
+   }
+  ]
+ },
+ "lg_bok_call": {
+  "scene": "명부",
+  "text": [
+   "너는 한복실 집 앞에 선다. 문은 하얗다. 문틀만 연필 선처럼 남았다. 명부를 펼친다.",
+   "\"한복실 할머니. 혼자 사시는. 두부를 잘 만드시던.\"",
+   "하얀 부엌 창에 김이 서린다. 콩 삶는 냄새가 아주 잠깐 지나간다. 그다음 장독 하나.",
+   {
+    "if": "flag(\"called_yong\") and flag(\"called_bok\") and flag(\"called_tae\")",
+    "then": "@empathy: 세 집이 다 돌아왔다. 사람은 아직이다. 그래도 마을이 자기 집이 몇 채인지 다시 셀 수 있게 됐다.",
+    "else": "@empathy: 사람은 돌아오지 않았다. 그래도 집이 자기가 누구네 집인지 기억해 냈다."
+   }
+  ],
+  "on": {
+   "flag": "called_bok",
+   "ws": 1,
+   "pale": -1,
+   "morale": 1
+  },
+  "options": [
+   {
+    "t": "명부를 덮는다.",
+    "go": "_return"
+   }
+  ]
+ },
+ "lg_bok_fix": {
+  "scene": "명부",
+  "text": [
+   "손끝에 홈이 걸린다. 박순녀가 처음 적을 때 꾹꾹 눌러 쓴 자국이다. 너는 그 위에 연필로 한 글자씩 다시 쓴다. 한복실.",
+   "@hands: 사람이 남긴 자국은 잉크보다 오래 간다. 창백은 잉크만 먹었다."
+  ],
+  "on": {
+   "flag": "fixed_bok",
+   "name": "한복실",
+   "sp": 1
+  },
+  "options": [
+   {
+    "t": "명부를 다시 본다.",
+    "go": "lg_bok"
+   }
+  ]
+ },
+ "lg_bok_smudge": {
+  "scene": "명부",
+  "text": [
+   "손끝이 미끄러진다. 홈이 무너지며 종이가 하얗게 일어난다.",
+   "@hands: 너무 세게 눌렀다. 지우는 사람들처럼."
+  ],
+  "on": {
+   "flag": "smudged_bok",
+   "morale": -1
+  },
+  "options": [
+   {
+    "t": "…",
+    "go": "lg_bok"
+   }
+  ]
+ },
+ "lg_tae": {
+  "scene": "명부",
+  "text": [
+   {
+    "if": "flag(\"called_tae\")",
+    "then": "2반 7호 · 문태식네. 줄 위의 이름이 진하다. 볼펜 홈에 잉크가 다시 고였다.",
+    "else": {
+     "if": "flag(\"park_named\") or flag(\"fixed_tae\")",
+     "then": "2반 7호. 「이사 감」 옆에 네가 써넣은 이름: 문태식. 아직 연필 자국처럼 흐리다. 쓴 것만으로는 모자라다는 듯이.",
+     "else": {
+      "if": "flag(\"smudged_tae\")",
+      "then": "2반 7호. 「이사 감」. 네 손끝이 지나간 자리가 번져 있다. 이 줄은 이제 박순녀의 기억에만 남았다.",
+      "else": "2반 7호. 볼펜 홈만 남고 잉크가 없다. 옆에 박순녀의 글씨: 「이사 감」."
+     }
+    }
+   },
+   {
+    "if": "not flag(\"called_tae\") and not (flag(\"park_named\") or flag(\"fixed_tae\")) and not flag(\"smudged_tae\")",
+    "then": "@hands: 홈은 아직 있다. 손끝으로 읽을 수 있을지도 모른다. 한 번뿐이다. 잘못 문지르면 홈이 무너진다."
+   },
+   {
+    "if": "not flag(\"called_tae\") and (flag(\"park_named\") or flag(\"fixed_tae\")) and not flag(\"lg_village\")",
+    "then": "@empathy: 이름은 그 집 앞에서 불러야 들린다. 청수리로 돌아가야 한다."
+   }
+  ],
+  "options": [
+   {
+    "t": "문태식네 빈 집 앞에 서서, 명부의 이름을 소리 내어 부른다.",
+    "go": "lg_tae_call",
+    "req": [
+     "lg_village"
+    ],
+    "cond": "flag(\"park_named\") or flag(\"fixed_tae\")",
+    "not": [
+     "called_tae"
+    ]
+   },
+   {
+    "t": "볼펜 홈을 손끝으로 더듬어 이름을 읽어낸다.",
+    "check": {
+     "s": "hands",
+     "dc": 11,
+     "red": true
+    },
+    "ok": "lg_tae_fix",
+    "no": "lg_tae_smudge",
+    "not": [
+     "park_named",
+     "fixed_tae",
+     "smudged_tae"
+    ]
+   },
+   {
+    "t": "명부를 덮는다.",
+    "go": "_return"
+   }
+  ]
+ },
+ "lg_tae_call": {
+  "scene": "명부",
+  "text": [
+   "너는 문태식네 집 앞에 선다. 문은 하얗다. 문틀만 연필 선처럼 남았다. 명부를 펼친다.",
+   "\"문태식 동무. 탄광에서 다쳐 기침을 달고 사시던.\"",
+   "하얀 마당 어딘가에서 마른기침이 한 번 들린 것 같다. 그리고 빨랫줄이 돌아온다. 작업복 한 벌이 걸린 채로.",
+   {
+    "if": "flag(\"called_yong\") and flag(\"called_bok\") and flag(\"called_tae\")",
+    "then": "@empathy: 세 집이 다 돌아왔다. 사람은 아직이다. 그래도 마을이 자기 집이 몇 채인지 다시 셀 수 있게 됐다.",
+    "else": "@empathy: 사람은 돌아오지 않았다. 그래도 집이 자기가 누구네 집인지 기억해 냈다."
+   }
+  ],
+  "on": {
+   "flag": "called_tae",
+   "ws": 1,
+   "pale": -1,
+   "morale": 1
+  },
+  "options": [
+   {
+    "t": "명부를 덮는다.",
+    "go": "_return"
+   }
+  ]
+ },
+ "lg_tae_fix": {
+  "scene": "명부",
+  "text": [
+   "손끝에 홈이 걸린다. 박순녀가 처음 적을 때 꾹꾹 눌러 쓴 자국이다. 너는 그 위에 연필로 한 글자씩 다시 쓴다. 문태식.",
+   "@hands: 사람이 남긴 자국은 잉크보다 오래 간다. 창백은 잉크만 먹었다."
+  ],
+  "on": {
+   "flag": "fixed_tae",
+   "name": "문태식",
+   "sp": 1
+  },
+  "options": [
+   {
+    "t": "명부를 다시 본다.",
+    "go": "lg_tae"
+   }
+  ]
+ },
+ "lg_tae_smudge": {
+  "scene": "명부",
+  "text": [
+   "손끝이 미끄러진다. 홈이 무너지며 종이가 하얗게 일어난다.",
+   "@hands: 너무 세게 눌렀다. 지우는 사람들처럼."
+  ],
+  "on": {
+   "flag": "smudged_tae",
+   "morale": -1
+  },
+  "options": [
+   {
+    "t": "…",
+    "go": "lg_tae"
+   }
+  ]
+ },
  "graves": {
   "scene": "뒷산 공동묘지",
   "text": [
@@ -6255,7 +6609,15 @@
  "d5_purge_ledger": {
   "scene": "삼지연 · 정리반 지휘소",
   "text": [
-   "#강동혁: 그 공책. 하얘졌던 이름을 다시 써넣은 명단이라지. 그런 게 제일 위험하다. 지워진 걸 되살리는 문서. 불에 넣어라."
+   "#강동혁: 그 공책. 하얘졌던 이름을 다시 써넣은 명단이라지. 그런 게 제일 위험하다. 지워진 걸 되살리는 문서. 불에 넣어라.",
+   {
+    "if": "flag(\"called_yong\") or flag(\"called_bok\") or flag(\"called_tae\")",
+    "then": "#강동혁: 게다가 동무는 하얀 집 앞에 서서 그 이름들을 소리 내어 불렀다지. 청수리에서 보고가 올라왔다. 집이 돌아왔다고. 돌아오면 안 되는 집이."
+   },
+   {
+    "if": "flag(\"caravan_route\")",
+    "then": "#강동혁: 그리고 그 뒷장. 상단 놈들 길이 그려져 있군. 그것까지 태우면 일이 두 개 줄지."
+   }
   ],
   "options": [
    {
@@ -6603,6 +6965,16 @@
     "once": true
    },
    {
+    "t": "명부를 펼쳐 보인다. \"이름으로 길을 낸다면, 이것도 길이오?\"",
+    "go": "d5_baek_ledger",
+    "req": [
+     "item_ledger"
+    ],
+    "not": [
+     "caravan_route"
+    ]
+   },
+   {
     "t": "썰매 짐을 검사하는 척한다. (정리반에 보고할 수도 있다)",
     "go": "d5_baek_inspect",
     "once": true
@@ -6680,6 +7052,33 @@
   "options": [
    {
     "t": "…",
+    "go": "d5_caravan"
+   }
+  ]
+ },
+ "d5_baek_ledger": {
+  "scene": "삼지연 못 얼음판 · 흰 길 상단",
+  "text": [
+   "백순자가 명부를 받아 든다. 침을 묻혀 한 장씩 넘긴다. 사람 장에서 오래 멈추고, 약도 장에서 웃는다.",
+   "#백순자: 지도구먼. 이름이 적힌 데만 길이 나는 지도. 우리 썰매꾼들 머릿속에 있는 거랑 똑같소.",
+   {
+    "if": "flag(\"called_yong\") or flag(\"called_bok\") or flag(\"called_tae\")",
+    "then": "#백순자: 하얀 집 앞에서 이름을 불렀다고? 그럼 당신도 반쯤은 썰매꾼이오.",
+    "else": "#백순자: 적기만 하고 부르진 않았구먼. 이름은 불러야 줄이 되오."
+   },
+   "그녀가 몽당연필로 삼지연 뒷장에 선을 긋는다. 못 위를 가로질러, 하얀 쪽으로. 선 중간중간에 작은 동그라미. 썰매가 쉬어 가는 자리마다 이름 하나씩.",
+   "#백순자: 순자, 영철, 미화… 이 동그라미에 서서 이름을 부르면 다음 동그라미가 보이오. 장백까지 그렇게 가지. 남한테는 안 보여주는 길이오.",
+   "@jangmadang: 밀수꾼이 장부를 보여준다는 건 동업하자는 뜻이다."
+  ],
+  "on": {
+   "flag": "caravan_route",
+   "rep": {
+    "caravan": 1
+   }
+  },
+  "options": [
+   {
+    "t": "명부를 돌려받는다.",
     "go": "d5_caravan"
    }
   ]

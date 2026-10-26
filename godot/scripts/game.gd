@@ -459,8 +459,26 @@ func choose(st: Dictionary) -> void:
 		push("roll", "[font_size=15][color=#8f877a]%s (%d+%d+%d = %d / %d) [color=%s][b]%s%s[/b][/color][/color][/font_size]" % [
 			skill_tag(k), a, b, lv, a + b + lv, dc, "#7fbf6a" if ok else "#b8322a", "성공" if ok else "실패", crit])
 		go(o.ok if ok else o.no)
+	elif o.go == "_return":
+		close_ledger()
 	else:
 		go(o.go)
+
+
+## 명부 창에서 명부 장면(lg_*)을 연다. 덮으면 원래 장면으로 돌아간다(본문을 다시 찍지 않는다).
+## in_village: 지금 청수리 안에 있는가. 이름은 그 집 앞에서 불러야 한다.
+func open_ledger(id: String, in_village: bool) -> void:
+	if not str(S.node).begins_with("lg_"):
+		S.ledger_from = S.node
+	S.flags["lg_village"] = in_village
+	sys("— 명부를 펼친다 —")
+	go(id)
+
+
+func close_ledger() -> void:
+	S.node = S.get("ledger_from", "square")
+	S.speaker = ""
+	sys("— 명부를 덮는다 —")
 
 
 # ---------- 저장 ----------

@@ -61,17 +61,27 @@ func _init() -> void:
 	main._open_ledger("cheongsu")
 	await _frames(5)
 	await _snap(out + "/g_ledger_map1.png")
-	for n in ["station", "market", "graves", "night1", "square2", "park_home2", "park_names"]:
+	for n in ["station", "market", "graves", "night1", "park_home2", "park_names", "square2"]:
 		main.game.go(n)
-	main.game.S.flags["pale_expanded"] = true
-	main.game.go("square3")
 	main._open_ledger("people")
 	await _frames(5)
 	await _snap(out + "/g_ledger_people2.png")
 	main._open_ledger("cheongsu")
 	await _frames(5)
 	await _snap(out + "/g_ledger_map2.png")
-	for n in ["d5_arrive", "d5_hub", "d5_plaza", "d5_bear", "d5_lab"]:
+	# 하얘진 집 줄을 열어 그 집 앞에서 이름을 부른다
+	main._ledger_open_line(1)
+	await create_timer(0.3).timeout
+	await _snap(out + "/g_ledger_line.png")
+	main.game_choose(main.game.visible_options()[0])
+	await create_timer(0.3).timeout
+	await _snap(out + "/g_ledger_call.png")
+	main.game_choose(main.game.visible_options()[0])
+	main.game.S.flags["pale_expanded"] = true
+	main._open_ledger("cheongsu")
+	await _frames(5)
+	await _snap(out + "/g_ledger_map2b.png")
+	for n in ["d5_arrive", "d5_hub", "d5_plaza", "d5_bear", "d5_lab", "d5_caravan", "d5_baek_ledger", "d5_hub"]:
 		main.game.go(n)
 	main._open_ledger("samjiyon")
 	await _frames(5)
