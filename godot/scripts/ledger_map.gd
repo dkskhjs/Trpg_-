@@ -38,12 +38,14 @@ func _gui_input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
 	for pl in page.places:
-		if reachable.has(pl.id) and event.position.distance_to(_pt(pl.x, pl.y)) < 22.0:
+		if reachable.has(pl.id) and event.position.distance_to(_place_pt(pl)) < 22.0:
 			place_clicked.emit(pl.id)
 			accept_event()
 			return
-	for eh in page.get("erased_houses", []):
-		if event.position.distance_to(_pt(eh.x, eh.y)) < 20.0:
+	var houses: Array = page.get("erased_houses", [])
+	for i in houses.size():
+		var eh: Dictionary = houses[i]
+		if event.position.distance_to(_house_pt(i, eh)) < 20.0:
 			house_clicked.emit(int(eh.household))
 			accept_event()
 			return
@@ -59,6 +61,26 @@ func _scene() -> String:
 
 func _pt(x: float, y: float) -> Vector2:
 	return Vector2(x * size.x, y * size.y)
+
+
+## 바탕 그림이 있으면 그림의 지형에 맞춘 배치(art_layout)를 쓴다.
+func _lay() -> Dictionary:
+	return page.get("art_layout", {}) if art else {}
+
+
+func _place_pt(pl: Dictionary) -> Vector2:
+	var p = _lay().get("places", {}).get(pl.id)
+	return _pt(p[0], p[1]) if p != null else _pt(pl.x, pl.y)
+
+
+func _house_pt(i: int, eh: Dictionary) -> Vector2:
+	var hs: Array = _lay().get("houses", [])
+	return _pt(hs[i][0], hs[i][1]) if i < hs.size() else _pt(eh.x, eh.y)
+
+
+## 바탕 그림의 가로:세로 비율(그림이 없으면 0).
+func art_aspect() -> float:
+	return float(art.get_width()) / art.get_height() if art else 0.0
 
 
 func _place_state(pl: Dictionary) -> String:
@@ -84,6 +106,9 @@ func _here(pl: Dictionary) -> bool:
 
 ## 창백이 먹은 깊이(화면 높이 비율). 3일째 보고서 뒤로는 물러남·확장에 따라 달라진다.
 func _pale_depth() -> float:
+	var pd: Array = _lay().get("pale", [])
+	if pd.size() == 3:
+		return pd[0] if game.flag("pale_receded") else (pd[2] if game.flag("pale_expanded") else pd[1])
 	if game.flag("pale_receded"):
 		return 0.07
 	if game.flag("pale_expanded"):
@@ -119,9 +144,10 @@ func _draw() -> void:
 		if sa == "hidden" or sb == "hidden":
 			continue
 		var both := sa == "visited" and sb == "visited"
-		_pencil_line(_pt(a.x, a.y), _pt(b.x, b.y), INK if both else FAINT, 2.0 if both else 1.0, not both)
-	for eh in page.get("erased_houses", []):
-		_draw_erased(eh)
+		_pencil_line(_place_pt(a), _place_pt(b), INK if both else FAINT, 2.0 if both else 1.0, not both)
+	var hs: Array = page.get("erased_houses", [])
+	for i in hs.size():
+		_draw_erased(hs[i], _house_pt(i, hs[i]))
 	for pl in page.places:
 		_draw_place(pl)
 	if page.get("river", false) and not game.flag("pale_receded"):
@@ -132,18 +158,22 @@ func _draw() -> void:
 
 ## 백순자가 몽당연필로 그어 준 흰 길: 얼음판에서 하얀 쪽으로, 쉬어 가는 자리마다 동그라미.
 func _draw_caravan_route() -> void:
-	var poly := PackedVector2Array([_pt(1.0, 0.44)])
+	var band: Array = _lay().get("route_patch", [0.44, 0.82])
+	var poly := PackedVector2Array([_pt(1.0, band[0])])
 	for i in 13:
 		var t := i / 12.0
-		poly.append(_pt(0.965 + 0.02 * sin(t * 9.0), 0.44 + t * 0.38))
-	poly.append(_pt(1.0, 0.82))
+		poly.append(_pt(0.965 + 0.02 * sin(t * 9.0), band[0] + t * (band[1] - band[0])))
+	poly.append(_pt(1.0, band[1]))
 	draw_colored_polygon(poly, PALE)
 	var pts := [Vector2(0.79, 0.87), Vector2(0.86, 0.80), Vector2(0.92, 0.73), Vector2(0.975, 0.66)]
+	if _lay().has("route"):
+		pts = _lay().route.map(func(v): return Vector2(v[0], v[1]))
 	for i in pts.size() - 1:
 		draw_dashed_line(_pt(pts[i].x, pts[i].y), _pt(pts[i + 1].x, pts[i + 1].y), INK, 1.5, 5.0)
 	for i in range(1, pts.size()):
 		draw_arc(_pt(pts[i].x, pts[i].y), 5.0, 0, TAU, 12, INK, 1.2)
-	_label(_pt(0.83, 0.58), "흰 길 → 장백", INK, 13)
+	var rl: Array = _lay().get("route_label", [0.83, 0.58])
+	_label(_pt(rl[0], rl[1]), "흰 길 → 장백", INK, 13)
 
 
 func _draw_river() -> void:
@@ -175,14 +205,18 @@ func _draw_pale_band() -> void:
 		var t := i / 30.0
 		poly.append(_pt(t, depth + 0.02 * sin(t * 11.0 + 1.3) + 0.012 * sin(t * 29.0)))
 	draw_colored_polygon(poly, PALE)
-	_label(_pt(0.58, depth * 0.45), "(그릴 것이 없다)", Color(FAINT, 0.7), 12)
+	var pl_at: Array = _lay().get("pale_label", [0.58, depth * 0.45])
+	_label(_pt(pl_at[0], pl_at[1]), "(그릴 것이 없다)", Color(FAINT, 0.7), 12)
 
 
 ## 확장 분기에서는 창백이 마을 쪽으로 혀를 내민다.
 func _draw_pale_creep() -> void:
 	if not game.flag("pale_expanded"):
 		return
-	for c in [Vector2(0.35, 0.3), Vector2(0.62, 0.34), Vector2(0.86, 0.28)]:
+	var spots := [Vector2(0.35, 0.3), Vector2(0.62, 0.34), Vector2(0.86, 0.28)]
+	if _lay().has("creep"):
+		spots = _lay().creep.map(func(v): return Vector2(v[0], v[1]))
+	for c in spots:
 		var poly := PackedVector2Array()
 		for i in 18:
 			var a := i / 18.0 * TAU
@@ -201,9 +235,8 @@ func _draw_lake() -> void:
 	_label(_pt(0.72, 0.74), "삼지연 못", RIVER, 13)
 
 
-func _draw_erased(eh: Dictionary) -> void:
+func _draw_erased(eh: Dictionary, c: Vector2) -> void:
 	var hh: Dictionary = households[int(eh.household)]
-	var c := _pt(eh.x, eh.y)
 	if game.eval_cond(hh.called_if):
 		_house(c, INK, 1.5)
 		_label(c + Vector2(12, 5), hh.head, INK, 13)
@@ -224,7 +257,7 @@ func _draw_place(pl: Dictionary) -> void:
 	var st := _place_state(pl)
 	if st == "hidden":
 		return
-	var c := _pt(pl.x, pl.y)
+	var c := _place_pt(pl)
 	var col := INK if st == "visited" else FAINT
 	if st == "visited":
 		draw_circle(c, 6.0, INK)

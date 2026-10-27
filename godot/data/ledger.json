@@ -20,6 +20,7 @@
  ],
  "maps": [
   {"id": "cheongsu", "title": "청수리 약도", "lake": false, "river": true, "note": "북쪽이 압록강. 강 건너는 그리지 않았다. 그릴 것이 없다.",
+   "art_layout": {"places": {"edge": [0.26, 0.24], "river": [0.42, 0.44], "soldier": [0.76, 0.37], "inn": [0.22, 0.52], "square": [0.45, 0.57], "park": [0.3, 0.63], "station": [0.8, 0.53], "market": [0.58, 0.66], "graves": [0.47, 0.8], "rail": [0.2, 0.92], "road": [0.84, 0.89]}, "houses": [[0.17, 0.71], [0.22, 0.79], [0.35, 0.70]], "pale": [0.17, 0.21, 0.33], "creep": [[0.3, 0.43], [0.6, 0.37], [0.86, 0.31]], "pale_label": [0.55, 0.09]},
    "places": [
     {"id": "edge", "name": "창백의 경계", "x": 0.2, "y": 0.13, "nodes": ["edge3", "pale_hand_ok", "pale_hand_no", "pale_gaze_ok", "pale_gaze_no", "rep_walk"], "hidden": true, "scenes": ["창백의 가장자리", "창백의 경계"]},
     {"id": "river", "name": "압록강 둑", "x": 0.46, "y": 0.37, "nodes": ["river", "r4_dawn", "r4_shore", "r4_mun", "finale"], "scenes": ["압록강 둑", "밤의 압록강"]},
@@ -37,6 +38,7 @@
    "roads": [["inn", "square"], ["square", "river"], ["river", "soldier"], ["river", "edge"], ["square", "park"], ["square", "station"], ["square", "market"], ["market", "graves"], ["park", "graves"], ["inn", "rail"], ["park", "road"]]
   },
   {"id": "samjiyon", "title": "삼지연 약도", "show_if": "visited(\"d5_arrive\") > 0", "lake": true, "river": false, "note": "청수리 명부 뒷장에 그렸다. 연필이 모자라 길은 대충.",
+   "art_layout": {"places": {"hub": [0.46, 0.47], "plaza": [0.55, 0.27], "pioneers": [0.22, 0.47], "purge": [0.7, 0.39], "lab": [0.38, 0.56], "bear": [0.2, 0.68], "track": [0.52, 0.93], "caravan": [0.6, 0.72], "archive": [0.33, 0.34], "temple": [0.17, 0.84]}, "route": [[0.6, 0.72], [0.76, 0.62], [0.87, 0.52], [0.97, 0.43]], "route_patch": [0.3, 0.6], "route_label": [0.7, 0.49]},
    "places": [
     {"id": "hub", "name": "읍 갈림길", "x": 0.5, "y": 0.46, "nodes": ["d5_arrive", "d5_hub", "d5_night"], "scenes": ["삼지연 · 5일째", "삼지연 읍", "삼지연 · 밤"]},
     {"id": "plaza", "name": "기념비 광장", "x": 0.56, "y": 0.16, "nodes": ["d5_plaza"], "scenes": ["삼지연 기념비"]},

@@ -64,6 +64,7 @@ var pale_label: Label
 var sheet_btn: Button
 var thought_btn: Button
 var ledger_btn: Button
+var modal_panel: PanelContainer
 var ledger_data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/ledger.json"))
 var ledger_tab := "people"
 var dossier: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/dossier.json"))
@@ -400,6 +401,7 @@ func _build_modal() -> void:
 	ps.set_content_margin_all(24)
 	panel.add_theme_stylebox_override("panel", ps)
 	panel.custom_minimum_size = Vector2(780, 560)
+	modal_panel = panel
 	center.add_child(panel)
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -747,6 +749,7 @@ func _unhandled_input(event: InputEvent) -> void:
 # ---------- 모달 ----------
 ## closable: 1이면 닫기 단추와 바깥 누르기로 닫힌다. -1이면 판이 진행 중일 때만.
 func _open_modal(closable: int = -1) -> void:
+	modal_panel.custom_minimum_size = Vector2(780, 560)
 	_web_disarm_upload()
 	for c in modal_body.get_children():
 		c.queue_free()
@@ -1127,8 +1130,14 @@ func _open_ledger(tab: String) -> void:
 			_modal_text(m.note + "   " + legend, C_DIM, 13)
 			var map := LedgerMap.new()
 			map.custom_minimum_size = Vector2(730, 325)
-			modal_body.add_child(map)
 			map.setup(game, m, ledger_data.households, font_regular, reach)
+			if map.art_aspect() > 0.0:
+				# 손그림 바탕(세로 공책 한 쪽): 그림 비율대로 크게, 가운데에
+				var h := 530.0
+				map.custom_minimum_size = Vector2(h * map.art_aspect(), h)
+				map.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+				modal_panel.custom_minimum_size = Vector2(780, 740)
+			modal_body.add_child(map)
 			map.place_clicked.connect(func(id: String):
 				_close_modal()
 				game_choose(reach[id]))
