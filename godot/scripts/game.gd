@@ -523,6 +523,30 @@ func load_game(slot: String = "1") -> bool:
 	return true
 
 
+## 내려받기용: 칸의 내용을 그대로 문자열로.
+static func slot_text(slot: String) -> String:
+	var path := slot_path(slot)
+	return FileAccess.get_file_as_string(path) if FileAccess.file_exists(path) else ""
+
+
+## 올린 파일이 이 놀이의 보관 파일인지 확인하고 칸에 쓴다. 성공하면 빈 문자열, 아니면 이유.
+func import_text(text: String, slot: String) -> String:
+	var data = JSON.parse_string(text)
+	if not data is Dictionary:
+		return "보관 파일이 아닙니다"
+	for k in ["node", "flags", "day", "names", "log"]:
+		if not data.has(k):
+			return "보관 파일이 아닙니다"
+	if not story.has(str(data.node)):
+		return "다른 판본의 보관 파일입니다"
+	var f := FileAccess.open(slot_path(slot), FileAccess.WRITE)
+	if f == null:
+		return "쓰지 못했습니다"
+	f.store_string(text)
+	f.close()
+	return ""
+
+
 static func read_slot(slot: String) -> Dictionary:
 	var path := slot_path(slot)
 	if not FileAccess.file_exists(path):

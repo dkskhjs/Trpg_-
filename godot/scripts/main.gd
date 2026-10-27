@@ -297,6 +297,7 @@ func _build_layout() -> void:
 	add_child(title)
 	title.new_game.connect(_open_start)
 	title.continue_game.connect(_on_continue)
+	title.open_load.connect(_on_load)
 	title.open_settings.connect(_open_settings)
 	title.open_credits.connect(_open_credits)
 	title.quit_game.connect(func(): get_tree().quit())
@@ -511,7 +512,7 @@ func _divider_texture() -> ImageTexture:
 func _update_log_blur() -> void:
 	if log_blur == null:
 		return
-	var on: bool = divider_char >= 0 and not settings.lite and log_view.is_ready()
+	var on: bool = divider_char >= 0 and not settings.lite and log_view.is_ready() and not modal.visible and not title.visible
 	var h := 0.0
 	if on:
 		var line := log_view.get_character_line(divider_char)
@@ -746,6 +747,7 @@ func _unhandled_input(event: InputEvent) -> void:
 # ---------- 모달 ----------
 ## closable: 1이면 닫기 단추와 바깥 누르기로 닫힌다. -1이면 판이 진행 중일 때만.
 func _open_modal(closable: int = -1) -> void:
+	_web_disarm_upload()
 	for c in modal_body.get_children():
 		c.queue_free()
 	var can_close := game.has_game() if closable < 0 else closable == 1
@@ -761,6 +763,7 @@ func _open_modal(closable: int = -1) -> void:
 
 func _close_modal() -> void:
 	modal.hide()
+	_web_disarm_upload()
 
 
 func _modal_title(t: String) -> void:
@@ -1320,6 +1323,120 @@ func _open_slots(saving: bool) -> void:
 			b.disabled = info.is_empty()
 			b.pressed.connect(func(): _load_slot(slot))
 		row.add_child(b)
+		if not info.is_empty():
+			var dl := Button.new()
+			dl.text = "파일로 내려받기"
+			dl.add_theme_font_size_override("font_size", 14)
+			dl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			dl.pressed.connect(_export_slot.bind(slot, info))
+			row.add_child(dl)
+	if not saving:
+		_modal_heading("다른 기기에서 이어 하기")
+		_modal_text("내려받은 보관 파일(.json)을 올리면 자동 보관 칸에 넣고 바로 불러온다. 브라우저 데이터를 지우기 전에 내려받아 두면 안전하다.", C_DIM, 14)
+		var up := Button.new()
+		up.text = "보관 파일 올리기"
+		up.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		modal_body.add_child(up)
+		if OS.has_feature("web"):
+			_web_arm_upload.call_deferred(up)   # 웹: 브라우저가 이 버튼 위 클릭을 직접 받아 파일 창을 연다
+		else:
+			up.pressed.connect(_import_file)
+
+
+## 보관 칸을 파일로 내려받는다. 웹은 브라우저 내려받기, 데스크톱은 저장 창.
+func _export_slot(slot: String, info: Dictionary) -> void:
+	var text := Game.slot_text(slot)
+	if text == "":
+		return
+	var file_name := "pale_chungsu_%s_day%d.json" % [slot, int(info.day)]
+	if OS.has_feature("web"):
+		JavaScriptBridge.download_buffer(text.to_utf8_buffer(), file_name, "application/json")
+		return
+	var dlg := FileDialog.new()
+	dlg.file_mode = FileDialog.FILE_MODE_SAVE_FILE
+	dlg.access = FileDialog.ACCESS_FILESYSTEM
+	dlg.use_native_dialog = true
+	dlg.current_file = file_name
+	dlg.filters = PackedStringArray(["*.json ; 보관 파일"])
+	dlg.file_selected.connect(func(path: String):
+		var f := FileAccess.open(path, FileAccess.WRITE)
+		if f:
+			f.store_string(text)
+			f.close()
+		dlg.queue_free())
+	add_child(dlg)
+	dlg.popup_centered(Vector2i(800, 500))
+
+
+var _js_file_cb: JavaScriptObject   # 웹 파일 선택 콜백을 붙잡아 둔다(놓치면 호출되지 않는다)
+var _js_ready := false
+
+## 웹 브라우저는 클릭 이벤트 안에서만 파일 선택 창을 허용한다. Godot는 클릭을 다음 프레임에 처리하므로
+## 버튼 위치를 브라우저에 알려 두고, 그 자리를 누르면 브라우저 쪽에서 바로 파일 창을 연다.
+func _web_setup() -> void:
+	if _js_ready:
+		return
+	_js_ready = true
+	_js_file_cb = JavaScriptBridge.create_callback(func(args): _import_text(str(args[0])))
+	JavaScriptBridge.eval("""
+		window._paleUpload = { rect: null, cb: null };
+		document.addEventListener('pointerup', function (e) {
+			var u = window._paleUpload, c = document.querySelector('canvas');
+			if (!u.rect || !u.cb || !c) return;
+			var b = c.getBoundingClientRect();
+			var x = (e.clientX - b.left) / b.width, y = (e.clientY - b.top) / b.height;
+			if (x < u.rect[0] || x > u.rect[0] + u.rect[2] || y < u.rect[1] || y > u.rect[1] + u.rect[3]) return;
+			var i = document.createElement('input');
+			i.type = 'file'; i.accept = '.json,application/json'; i.style.display = 'none';
+			document.body.appendChild(i);   // 문서에 붙어 있어야 브라우저가 파일 창을 연다
+			i.onchange = function () {
+				var f = i.files[0]; i.remove(); if (!f) return;
+				var r = new FileReader(); r.onload = function () { u.cb(r.result); }; r.readAsText(f);
+			};
+			i.click();
+		}, true);""", true)
+	JavaScriptBridge.get_interface("window")._paleUpload.cb = _js_file_cb
+
+
+func _web_arm_upload(btn: Button) -> void:
+	_web_setup()
+	# 창 배치가 끝난 뒤의 위치가 필요하다
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not is_instance_valid(btn) or not btn.is_visible_in_tree():
+		return
+	var vp := get_viewport().get_visible_rect().size
+	var r := btn.get_global_rect()
+	JavaScriptBridge.eval("window._paleUpload.rect = [%f, %f, %f, %f];" % [r.position.x / vp.x, r.position.y / vp.y, r.size.x / vp.x, r.size.y / vp.y], true)
+
+
+func _web_disarm_upload() -> void:
+	if _js_ready:
+		JavaScriptBridge.eval("window._paleUpload.rect = null;", true)
+
+
+## 보관 파일을 올린다(데스크톱). 웹은 _web_arm_upload가 맡는다.
+func _import_file() -> void:
+	var dlg := FileDialog.new()
+	dlg.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	dlg.access = FileDialog.ACCESS_FILESYSTEM
+	dlg.use_native_dialog = true
+	dlg.filters = PackedStringArray(["*.json ; 보관 파일"])
+	dlg.file_selected.connect(func(path: String):
+		_import_text(FileAccess.get_file_as_string(path))
+		dlg.queue_free())
+	add_child(dlg)
+	dlg.popup_centered(Vector2i(800, 500))
+
+
+func _import_text(text: String) -> void:
+	var err := game.import_text(text, "auto")
+	if err != "":
+		_open_modal(1)
+		_modal_title("올리지 못했습니다")
+		_modal_text(err, C_INK, 16)
+		return
+	_load_slot("auto")
 
 
 func _load_slot(slot: String) -> bool:

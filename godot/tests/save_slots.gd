@@ -40,5 +40,10 @@ func _run() -> void:
 	var info := Game.slot_info("2")
 	if info.is_empty() or info.scene == "":
 		return _fail("칸 요약")
+	# 파일 올리기: 엉뚱한 파일은 거절하고, 내려받은 파일은 받아들인다
+	if h.import_text("{}", "3") == "" or h.import_text("아무 글", "3") == "":
+		return _fail("잘못된 파일을 받아들임")
+	if h.import_text(Game.slot_text("2"), "3") != "" or Game.read_slot("3").node != node2:
+		return _fail("내려받은 파일 올리기")
 	print("보관 칸 시험 통과: ", info)
 	quit(0)

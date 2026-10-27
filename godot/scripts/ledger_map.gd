@@ -20,6 +20,7 @@ var page: Dictionary
 var households: Array
 var font: Font
 var reachable := {}   # place id -> true
+var art: Texture2D      # 손그림 바탕(art/ledger/<id>.webp). 있으면 종이·강·못을 직접 그리지 않는다.
 
 
 func setup(g: Game, p: Dictionary, hh: Array, f: Font, reach: Dictionary = {}) -> void:
@@ -28,6 +29,8 @@ func setup(g: Game, p: Dictionary, hh: Array, f: Font, reach: Dictionary = {}) -
 	households = hh
 	font = f
 	reachable = reach
+	var path := "res://art/ledger/%s.webp" % p.id
+	art = load(path) if ResourceLoader.exists(path) else null
 	queue_redraw()
 
 
@@ -91,15 +94,18 @@ func _pale_depth() -> float:
 func _draw() -> void:
 	if game == null:
 		return
-	draw_rect(Rect2(Vector2.ZERO, size), PAPER)
-	# 장부 괘선
-	var y := 28.0
-	while y < size.y:
-		draw_line(Vector2(0, y), Vector2(size.x, y), RULE, 1.0)
-		y += 28.0
-	draw_line(Vector2(54, 0), Vector2(54, size.y), Color(DROP, 0.25), 1.0)
-	if page.get("lake", false):
-		_draw_lake()
+	if art:
+		draw_texture_rect(art, Rect2(Vector2.ZERO, size), false)
+	else:
+		draw_rect(Rect2(Vector2.ZERO, size), PAPER)
+		# 장부 괘선
+		var y := 28.0
+		while y < size.y:
+			draw_line(Vector2(0, y), Vector2(size.x, y), RULE, 1.0)
+			y += 28.0
+		draw_line(Vector2(54, 0), Vector2(54, size.y), Color(DROP, 0.25), 1.0)
+		if page.get("lake", false):
+			_draw_lake()
 	if page.get("river", false):
 		_draw_river()
 	var by_id := {}
@@ -132,15 +138,18 @@ func _draw_caravan_route() -> void:
 		poly.append(_pt(0.965 + 0.02 * sin(t * 9.0), 0.44 + t * 0.38))
 	poly.append(_pt(1.0, 0.82))
 	draw_colored_polygon(poly, PALE)
-	var pts := [Vector2(0.84, 0.84), Vector2(0.9, 0.76), Vector2(0.94, 0.69), Vector2(0.975, 0.62)]
+	var pts := [Vector2(0.79, 0.87), Vector2(0.86, 0.80), Vector2(0.92, 0.73), Vector2(0.975, 0.66)]
 	for i in pts.size() - 1:
 		draw_dashed_line(_pt(pts[i].x, pts[i].y), _pt(pts[i + 1].x, pts[i + 1].y), INK, 1.5, 5.0)
 	for i in range(1, pts.size()):
 		draw_arc(_pt(pts[i].x, pts[i].y), 5.0, 0, TAU, 12, INK, 1.2)
-	_label(_pt(0.8, 0.6), "흰 길 → 장백", INK, 13)
+	_label(_pt(0.83, 0.58), "흰 길 → 장백", INK, 13)
 
 
 func _draw_river() -> void:
+	if art:
+		_draw_pale_band()
+		return
 	var top := PackedVector2Array()
 	var bot := PackedVector2Array()
 	for i in 41:
@@ -155,7 +164,11 @@ func _draw_river() -> void:
 		var p := _pt(t, 0.27 + 0.025 * sin(t * 7.0) - 0.008)
 		draw_line(p, p + Vector2(14, 0), Color(RIVER, 0.6), 1.0)
 	_label(_pt(0.1, 0.335), "압 록 강", RIVER, 13)
-	# 강 건너: 창백. 종이가 그 자리만 하얗다.
+	_draw_pale_band()
+
+
+## 강 건너: 창백. 종이가 그 자리만 하얗다.
+func _draw_pale_band() -> void:
 	var depth := _pale_depth()
 	var poly := PackedVector2Array([Vector2.ZERO, Vector2(size.x, 0)])
 	for i in range(30, -1, -1):
@@ -182,10 +195,10 @@ func _draw_lake() -> void:
 	var poly := PackedVector2Array()
 	for i in 32:
 		var a := i / 32.0 * TAU
-		poly.append(_pt(0.78 + cos(a) * 0.17 * (1.0 + 0.08 * sin(a * 3.0)), 0.8 + sin(a) * 0.13))
+		poly.append(_pt(0.77 + cos(a) * 0.15 * (1.0 + 0.08 * sin(a * 3.0)), 0.8 + sin(a) * 0.13))
 	poly.append(poly[0])
 	draw_polyline(poly, RIVER, 2.0)
-	_label(_pt(0.71, 0.73), "삼지연 못", RIVER, 13)
+	_label(_pt(0.72, 0.74), "삼지연 못", RIVER, 13)
 
 
 func _draw_erased(eh: Dictionary) -> void:

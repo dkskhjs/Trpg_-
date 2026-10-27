@@ -38,16 +38,16 @@
   },
   {"id": "samjiyon", "title": "삼지연 약도", "show_if": "visited(\"d5_arrive\") > 0", "lake": true, "river": false, "note": "청수리 명부 뒷장에 그렸다. 연필이 모자라 길은 대충.",
    "places": [
-    {"id": "hub", "name": "읍 갈림길", "x": 0.48, "y": 0.52, "nodes": ["d5_arrive", "d5_hub", "d5_night"], "scenes": ["삼지연 · 5일째", "삼지연 읍", "삼지연 · 밤"]},
-    {"id": "plaza", "name": "기념비 광장", "x": 0.5, "y": 0.22, "nodes": ["d5_plaza"], "scenes": ["삼지연 기념비"]},
-    {"id": "pioneers", "name": "답사숙영소", "x": 0.2, "y": 0.4, "nodes": ["d5_pioneers"], "scenes": ["삼지연 답사숙영소"]},
-    {"id": "purge", "name": "정리반 지휘소", "x": 0.82, "y": 0.3, "nodes": ["d5_purge"], "scenes": ["삼지연 · 정리반"]},
-    {"id": "lab", "name": "연구소 천막", "x": 0.5, "y": 0.66, "nodes": ["d5_lab"], "scenes": ["삼지연 못가"]},
-    {"id": "bear", "name": "곰쫓사 야영지", "x": 0.16, "y": 0.76, "nodes": ["d5_bear"], "scenes": ["숲 가장자리"]},
-    {"id": "track", "name": "곰 발자국", "x": 0.07, "y": 0.92, "nodes": ["d5_track_ok", "d5_track_no"], "hidden": true, "scenes": ["하얀 눈밭"]},
-    {"id": "archive", "name": "인민위원회 문서고", "x": 0.68, "y": 0.12, "nodes": ["d5_archive"], "scenes": ["삼지연군 인민위원회 문서고"]},
-    {"id": "temple", "name": "숲가 암자", "x": 0.06, "y": 0.58, "nodes": ["d5_temple"], "scenes": ["숲가 암자"], "hidden": true},
-    {"id": "caravan", "name": "얼음판 · 흰 길 상단", "x": 0.84, "y": 0.84, "nodes": ["d5_caravan"], "scenes": ["삼지연 못 얼음판"]}
+    {"id": "hub", "name": "읍 갈림길", "x": 0.5, "y": 0.46, "nodes": ["d5_arrive", "d5_hub", "d5_night"], "scenes": ["삼지연 · 5일째", "삼지연 읍", "삼지연 · 밤"]},
+    {"id": "plaza", "name": "기념비 광장", "x": 0.56, "y": 0.16, "nodes": ["d5_plaza"], "scenes": ["삼지연 기념비"]},
+    {"id": "pioneers", "name": "답사숙영소", "x": 0.22, "y": 0.42, "nodes": ["d5_pioneers"], "scenes": ["삼지연 답사숙영소"]},
+    {"id": "purge", "name": "정리반 지휘소", "x": 0.84, "y": 0.22, "nodes": ["d5_purge"], "scenes": ["삼지연 · 정리반"]},
+    {"id": "lab", "name": "연구소 천막", "x": 0.5, "y": 0.72, "nodes": ["d5_lab"], "scenes": ["삼지연 못가"]},
+    {"id": "bear", "name": "곰쫓사 야영지", "x": 0.2, "y": 0.72, "nodes": ["d5_bear"], "scenes": ["숲 가장자리"]},
+    {"id": "track", "name": "곰 발자국", "x": 0.34, "y": 0.92, "nodes": ["d5_track_ok", "d5_track_no"], "hidden": true, "scenes": ["하얀 눈밭"]},
+    {"id": "archive", "name": "인민위원회 문서고", "x": 0.3, "y": 0.13, "nodes": ["d5_archive"], "scenes": ["삼지연군 인민위원회 문서고"]},
+    {"id": "temple", "name": "숲가 암자", "x": 0.13, "y": 0.9, "nodes": ["d5_temple"], "scenes": ["숲가 암자"], "hidden": true},
+    {"id": "caravan", "name": "얼음판 · 흰 길 상단", "x": 0.79, "y": 0.87, "nodes": ["d5_caravan"], "scenes": ["삼지연 못 얼음판"]}
    ],
    "erased_houses": [],
    "roads": [["hub", "plaza"], ["hub", "pioneers"], ["hub", "purge"], ["hub", "lab"], ["hub", "bear"], ["bear", "track"], ["lab", "caravan"], ["hub", "archive"], ["bear", "temple"]]

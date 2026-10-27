@@ -24,6 +24,8 @@ func _init() -> void:
 	out = OS.get_cmdline_user_args()[0]
 	main = load("res://main.tscn").instantiate()
 	root.add_child(main)
+	main.settings.lite = false
+	main.settings.lite_auto_done = true
 	await process_frame
 	main._start_new(0)
 	var g = main.game

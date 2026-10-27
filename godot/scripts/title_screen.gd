@@ -1,9 +1,10 @@
-## 첫화면. 새놀이 · 이어하기 · 설정 · 만든이들 · 끝내기.
+## 첫화면. 새놀이 · 이어하기 · 불러오기 · 설정 · 만든이들 · 끝내기.
 class_name TitleScreen
 extends Control
 
 signal new_game
 signal continue_game
+signal open_load
 signal open_settings
 signal open_credits
 signal quit_game
@@ -62,6 +63,7 @@ func _ready() -> void:
 
 	_menu(col, "새놀이", new_game.emit)
 	continue_btn = _menu(col, "이어하기", continue_game.emit)
+	_menu(col, "불러오기", open_load.emit)   # 보관 칸 고르기, 다른 기기에서 내려받은 파일 올리기
 	_menu(col, "설정", open_settings.emit)
 	_menu(col, "만든이들", open_credits.emit)
 	quit_btn = _menu(col, "끝내기", quit_game.emit)
