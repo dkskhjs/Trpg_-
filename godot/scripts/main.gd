@@ -1099,17 +1099,15 @@ func _open_thoughts() -> void:
 func _open_ledger(tab: String) -> void:
 	if not game.has_game() or game.item_count("ledger") <= 0:
 		return
+	if tab != "people":
+		tab = "maps"
 	ledger_tab = tab
 	_open_modal()
 	_modal_title("청수리 인민반 명부")
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 8)
 	modal_body.add_child(tabs)
-	var pages := [["people", "사람"]]
-	for m in ledger_data.maps:
-		if not m.has("show_if") or game.eval_cond(m.show_if):
-			pages.append([m.id, m.title])
-	for pg in pages:
+	for pg in [["people", "사람"], ["maps", "약도"]]:
 		var b := Button.new()
 		b.text = pg[1]
 		b.add_theme_font_size_override("font_size", 16)
@@ -1121,27 +1119,36 @@ func _open_ledger(tab: String) -> void:
 	if tab == "people":
 		_ledger_people()
 		return
+	_ledger_spread()
+
+
+## 약도: 공책을 펼친 두 쪽. 왼쪽 청수리, 오른쪽(뒷장) 삼지연. 아직 가지 않은 쪽은 흐리게 비어 있다.
+func _ledger_spread() -> void:
+	var legend := "● 가 본 곳 · ○ 아는 곳 · 붉은 점 지금 있는 곳 · 하얀 자리 창백 · 붉은 테두리를 누르면 그리로 간다"
+	_modal_text(legend, C_DIM, 13)
+	modal_panel.custom_minimum_size = Vector2(1000, 700)
+	var spread := HBoxContainer.new()
+	spread.add_theme_constant_override("separation", 6)   # 가운데 접힌 자리
+	spread.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	modal_body.add_child(spread)
+	var h := 490.0
+	var notes := []
 	for m in ledger_data.maps:
-		if m.id == tab:
-			var reach := _ledger_reachable(m)
-			var legend := "● 가 본 곳 · ○ 아는 곳 · 붉은 점 지금 있는 곳 · 하얀 자리 창백"
-			if not reach.is_empty():
-				legend += " · 붉은 테두리를 누르면 그리로 간다"
-			_modal_text(m.note + "   " + legend, C_DIM, 13)
-			var map := LedgerMap.new()
-			map.custom_minimum_size = Vector2(730, 325)
-			map.setup(game, m, ledger_data.households, font_regular, reach)
-			if map.art_aspect() > 0.0:
-				# 손그림 바탕(세로 공책 한 쪽): 그림 비율대로 크게, 가운데에
-				var h := 530.0
-				map.custom_minimum_size = Vector2(h * map.art_aspect(), h)
-				map.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-				modal_panel.custom_minimum_size = Vector2(780, 740)
-			modal_body.add_child(map)
-			map.place_clicked.connect(func(id: String):
-				_close_modal()
-				game_choose(reach[id]))
-			map.house_clicked.connect(_ledger_open_line)
+		var shown: bool = not m.has("show_if") or game.eval_cond(m.show_if)
+		var reach := _ledger_reachable(m) if shown else {}
+		var map := LedgerMap.new()
+		map.setup(game, m, ledger_data.households, font_regular, reach)
+		map.locked = not shown
+		var aspect := map.art_aspect() if map.art_aspect() > 0.0 else 0.867
+		map.custom_minimum_size = Vector2(h * aspect, h)
+		spread.add_child(map)
+		map.place_clicked.connect(func(id: String):
+			_close_modal()
+			game_choose(reach[id]))
+		map.house_clicked.connect(_ledger_open_line)
+		if shown:
+			notes.append("%s — %s" % [m.title, m.note])
+	_modal_text("   ".join(notes), C_DIM, 13)
 
 
 ## 약도에서 바로 갈 수 있는 곳: 지금 장면의 선택지 가운데 판정 없이 그 장소로 가는 것.

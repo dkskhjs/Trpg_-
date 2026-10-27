@@ -21,6 +21,7 @@ var households: Array
 var font: Font
 var reachable := {}   # place id -> true
 var art: Texture2D      # 손그림 바탕(art/ledger/<id>.webp). 있으면 종이·강·못을 직접 그리지 않는다.
+var locked := false     # 아직 그리지 않은 쪽(가 본 적 없는 곳): 흐린 빈 종이만
 
 
 func setup(g: Game, p: Dictionary, hh: Array, f: Font, reach: Dictionary = {}) -> void:
@@ -35,6 +36,8 @@ func setup(g: Game, p: Dictionary, hh: Array, f: Font, reach: Dictionary = {}) -
 
 
 func _gui_input(event: InputEvent) -> void:
+	if locked:
+		return
 	if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
 		return
 	for pl in page.places:
@@ -118,6 +121,15 @@ func _pale_depth() -> float:
 
 func _draw() -> void:
 	if game == null:
+		return
+	if locked:
+		if art:
+			draw_texture_rect(art, Rect2(Vector2.ZERO, size), false, Color(1, 1, 1, 0.35))
+		else:
+			draw_rect(Rect2(Vector2.ZERO, size), Color(PAPER, 0.35))
+		var t := "(뒷장 — 아직 비어 있다)"
+		var w := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+		draw_string(font, Vector2((size.x - w) / 2.0, size.y / 2.0), t, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(FAINT, 0.9))
 		return
 	if art:
 		draw_texture_rect(art, Rect2(Vector2.ZERO, size), false)
