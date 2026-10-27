@@ -62,7 +62,7 @@ python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
 
 공통 구도: `bust portrait, three-quarter view, face lit from one side`
 
-완성: `hero` `park` `myeongsu` `oh` `cat` `mun` `yoon` `cheol` `kimsh` ✅ · 남은 것: `choi` `elder` · 5일째 세력 인물: `do` `kwak` `seo` `heo` `kang` `baek`
+완성: `hero` `park` `myeongsu` `oh` `cat` `mun` `yoon` `cheol` `kimsh` ✅ · 남은 것은 아래 「남은 인물 초상화」 표 (13명 + 선택 1)
 
 사물 초상화: `leader_portrait`(금테 액자 안이 하얗게 빈 수령님 초상화) ✅. 초대소에서 초상화를 살피는 장면에서 인물 초상화 대신 뜹니다(`main.gd`의 `NODE_PORTRAITS`).
 
@@ -75,8 +75,26 @@ python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
 | `myeongsu` | 정명수. 19세 하전사 | `a skinny 19-year-old Korean soldier, oversized olive uniform, rifle on shoulder, cracked lips, thousand-yard stare, the hem of his uniform and his hands fading into translucent white` |
 | `oh` | 오영희. 기상관측원, 50대 | `a weary Korean woman in her 50s, meteorological observer, thick cardigan over work clothes, cigarette between fingers, smoke curling, ink-stained hands, dry sardonic half-smile` |
 | `cat` | 고양이(김설화). 밀수꾼, 20대 | `a sharp-eyed Korean woman around 20, cropped hair, cheap Chinese puffer jacket, holding an old smartphone with a glowing screen, defiant cat-like gaze, backpack strap on shoulder` |
-| `choi` | 최경철. 검열국 중좌, 50대 | `an imposing Korean lieutenant colonel in his 50s, long dark leather-trimmed greatcoat, red shoulder boards, cold authoritative face cracking with fear, one hand bare and completely white up to the wrist` |
-| `elder` | 묘지기 노인. 70대 | `a bent old Korean man in his 70s, grave keeper, weathered deep-lined face, holding a sickle, patched cotton clothes, calm eyes that remember too much` |
+
+### 남은 인물 초상화 (대사가 많은 순)
+스타일 블록 뒤에 붙이고, 공통 구도 `bust portrait, three-quarter view, face lit from one side`를 함께 쓴다. 게임에서 흑백으로 바꾼 뒤 「물감 방울 후보」 자리만 색이 돌아오게 할 것이다.
+
+| id | 인물 | 프롬프트 | 물감 방울 후보 |
+|---|---|---|---|
+| `choi` | 최경철. 검열국 중좌, 50대 후반 (대사 86줄) | `a stern Korean lieutenant colonel in his late 50s from the censorship bureau, long dark greatcoat with red shoulder boards, one leather glove removed, his bare right hand and forearm completely blank white like unprinted paper, faint illegible pencil scribbles on the white palm, heavy-lidded tired eyes, authority cracking into fear` | 붉은 견장, 하얀 손바닥의 연필 자국, 눈가 |
+| `baek` | 백순자. 흰 길 상단 우두머리, 조선족 60대 (23줄) | `a shrewd Korean-Chinese woman merchant in her 60s, thick fur coat and fur hat, a coiled sled rope over her shoulder, a small cloth name tag pinned to her coat, wry knowing smile, frost on her fur collar` | 이름표, 밧줄, 입가 |
+| `manbok` | 남만복. 군 인민위원회 문서 접수원, 50대 (22줄) | `a cheerful balding Korean clerk in his 50s at a county office reception window, black cuff sleeves over a worn cadre suit, a rubber stamp in his hand, embarrassed lopsided grin, a faint yellow porridge stain on his cuff, light relieved eyes` | 도장, 소매의 죽 얼룩 |
+| `suhan` | 김수한무. 답사단 인솔 보조, 30세 (22줄) | `a lanky 30-year-old Korean man, assistant leader of a student field trip, padded jacket with a small red armband, a very long paper scroll unrolling from his hands down to the snow, earnest anxious smile, frost in his eyebrows` | 붉은 완장, 두루마리 끝 |
+| `kang` | 강동혁. 정리반장 상좌, 50대 (21줄) | `a hard-faced Korean colonel in his 50s, military greatcoat with red shoulder boards, standing before an oil drum fire full of burning papers, white smoke rising behind him, expressionless` | 불꽃, 견장 |
+| `tony` | 토니토니 촛불앞. 전직 청부업자, 50대 후반 (21줄) | `a gaunt Korean man in his late 50s, former contract killer, long dark padded coat, holding a lit stub candle at chest height in broad daylight, a thick worn notebook in his other hand, neat polite posture, cold courteous eyes, the candle flame lighting one side of his face` | 촛불, 수첩 |
+| `hyegong` | 혜공. 암자의 노승 (23줄) | `an old Korean Buddhist monk in grey robes, shaved head, wooden prayer beads, holding a blank wooden memorial tablet and an ink brush, calm amused eyes, the hem of his robe fading into blank cream paper` | 위패, 붓끝, 염주 |
+| `eunsil` | 은실. 주인공의 누이, 17세, 1997년 봄 (16줄) | `a thin 17-year-old Korean girl in a frost-covered padded cotton coat, 1990s North Korean countryside, holding a small cloth bundle with two bags of corn noodles, cheeks hollow from hunger but smiling gently, frost melting on her eyelashes` | 보따리, 뺨, 서리 |
+| `heo` | 허명진. 창백 연구소 연구사, 40대 (15줄) | `a thin Korean physicist in his 40s, round glasses, padded lab coat, holding a glass jar filled with swirling blank white haze up to the light, curious and uneasy expression` | 유리병, 안경 |
+| `do` | 도학수. 곰쫓사 조사단장, 70대 (14줄) | `an elderly Korean archaeologist in his 70s, round wire glasses, worn field jacket over a suit, holding an old bone fragment wrapped in cloth, a bundle of dried mugwort tied to his bag, guilt in his eyes, mountain cold on his breath` | 뼛조각, 쑥 다발 |
+| `kwak` | 곽만석. 백두산 포수, 50대 (8줄) | `a rugged Korean mountain hunter in his 50s, fur hat, old hunting rifle, a bear claw amulet on a cord around his neck, snow on his shoulders, squinting at tracks in the snow` | 곰 발톱 부적, 총구 |
+| `elder` | 묘지기 노인. 70대 (7줄) | `a bent old Korean man in his 70s, grave keeper, weathered deep-lined face, holding a sickle, patched cotton clothes, a wooden grave marker beside him whose painted name has faded to white, calm eyes that remember too much` | 낫, 말뚝 |
+| `seo` | 서은하. 곰쫓사 생물학 연구원, 20대 (4줄) | `a young Korean woman biologist in her 20s, padded lab coat over winter clothes, specimen jars and a field notebook, measuring a huge paw print with a ruler, eager intense eyes` | 노트, 자 |
+| `young_eunseok` | (선택) 스물두 살의 주인공, 1996년 무산 — 대사 없음, 6일째 무산 장면용 | `a 22-year-old Korean man in an oversized 1990s North Korean security officer uniform, sitting at a wooden desk with a fountain pen hovering over a typed form, coal stove glow on his face, frozen hesitation` | 펜촉, 서류 |
 
 ### 4일째 이후 새 인물 (스타일 블록 뒤에 붙임)
 
@@ -128,21 +146,11 @@ python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
 ### 세력 인물 (5일째)
 | id | 인물 | 프롬프트 |
 |---|---|---|
-| `do` | 도학수 교수. 단군신화 연구대장, 70대 | `an elderly Korean archaeologist in his 70s, round wire glasses, worn field jacket over a suit, holding an old bone fragment wrapped in cloth, guilt in his eyes, mountain cold on his breath` |
-| `kwak` | 곽만석. 백두산 포수, 50대 | `a rugged Korean mountain hunter in his 50s, fur hat, old hunting rifle, snow on his shoulders, squinting at tracks in the snow` |
-| `seo` | 서은하. 생물학 연구원, 20대 | `a young Korean woman biologist in her 20s, padded lab coat over winter clothes, specimen jars and a notebook, eager intense eyes` |
-| `heo` | 허명진. 창백 연구소 연구사, 40대 | `a thin Korean physicist in his 40s, round glasses, padded lab coat, holding a glass jar filled with swirling blank white haze up to the light, curious and uneasy expression` |
-| `kang` | 강동혁. 정리반장, 50대 | `a hard-faced Korean colonel in his 50s, military greatcoat, red shoulder boards, standing before an oil drum fire full of burning papers, white smoke rising behind him, expressionless` |
-| `baek` | 백순자. 흰 길 상단 우두머리, 60대 | `a shrewd Korean-Chinese woman merchant in her 60s, thick fur coat and hat, sled rope coiled on her shoulder, wry smile, a name tag pinned to her coat` |
 | `white_bear` | 하얀 곰 (장면 그림) | `a huge pale bear walking through a blank white snowfield, its fur the same color as the void, only its dark eyes and footprints visible` |
 
 ### 5일째 새 인물 (다른 세션에서 추가)
 | id | 인물 | 프롬프트 |
 |---|---|---|
-| `manbok` | 남만복. 군 인민위원회 문서 접수원, 50대 | `a cheerful balding Korean clerk in his 50s, sleeves protectors over a worn cadre suit, sitting behind a reception window piled with blank white files, embarrassed grin, a faint yellow porridge stain on his cuff` |
-| `tony` | 토니토니 촛불앞. 전직 청부업자, 상단 호위 | `a gaunt Korean man in his late 50s in a long dark padded coat, lighting a stub candle in broad daylight on a sled at the back of a smugglers caravan, a thick worn notebook in his other hand, polite cold eyes` |
-| `suhan` | 김수한무. 답사단 인솔 보조, 30세 | `a lanky 30-year-old Korean man with a youth league armband, a long scroll of paper with his very long name trailing from his hands into the snow, earnest anxious smile` |
-| `hyegong` | 혜공. 암자의 노승 | `an old Korean Buddhist monk in grey robes in a tiny forest hermitage, holding a blank wooden memorial tablet and an ink brush, behind him old memorial tablets with names that are not bleached white` |
 
 ### 5일째 새 장소
 | id | 장소 | 프롬프트 |
@@ -153,8 +161,6 @@ python3 tools/gen_art.py --dry-run choi         # 보낼 프롬프트만 확인
 ### 6일째 인물
 | id | 인물 | 프롬프트 |
 |---|---|---|
-| `eunsil` | 은실. 주인공의 누이, 17세 (1997년 봄) | `a thin 17-year-old Korean girl in a frost-covered padded cotton coat, 1990s North Korean countryside, holding a small cloth bundle with two bags of corn noodles, cheeks hollow from hunger but smiling gently, frost melting on her eyelashes` |
-| `young_eunseok` | 스물두 살의 주인공, 1996년 무산군 보위부 지도원 | `a 22-year-old Korean man in an oversized 1990s North Korean security officer uniform, sitting at a wooden desk with a fountain pen hovering over a form, coal stove glow on his face, frozen hesitation` |
 
 ### 6일째 장소
 | id | 장소 | 프롬프트 |

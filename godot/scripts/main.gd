@@ -44,10 +44,11 @@ const PORTRAITS := {
 ## 사람 대신 사물을 보여주는 장면: 노드 id → PORTRAITS와 같은 형식. 화자보다 먼저 적용한다.
 const NODE_PORTRAITS := {
 	"d5_archive": ["manbok", "남만복 — 문서 접수원", []],
+	"d6_musan": ["young_eunseok", "스물두 살의 지도원 — 1996년 무산", []],
 	"d5_tony": ["tony", "토니토니 촛불앞 — 상단 호위", []],
 	"portrait": ["leader_portrait", "벽의 초상화 — 얼굴이 없다", [Vector3(0.18, 0.20, 0.14), Vector3(0.86, 0.24, 0.12), Vector3(0.20, 0.80, 0.12), Vector3(0.84, 0.82, 0.14)]],
 }
-const NODE_PORTRAIT_ALIASES := {"portrait_ignore": "portrait", "portrait_panic": "portrait", "portrait_wipe": "portrait"}
+const NODE_PORTRAIT_ALIASES := {"d6_musan_read": "d6_musan", "d6_young_hears": "d6_musan", "d6_young_deaf": "d6_musan", "d6_signs": "d6_musan", "d6_overwrite": "d6_musan", "portrait_ignore": "portrait", "portrait_panic": "portrait", "portrait_wipe": "portrait"}
 
 var game := Game.new()
 var font_regular: Font = preload("res://fonts/NanumMyeongjo-Regular.ttf")
